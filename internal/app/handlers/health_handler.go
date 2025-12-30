@@ -1,0 +1,36 @@
+package handlers
+
+import (
+	"net/http"
+	"github.com/gin-gonic/gin"
+)
+
+// HealthHandler handles health check routes
+type HealthHandler struct{}
+
+// NewHealthHandler creates a new HealthHandler instance
+func NewHealthHandler() *HealthHandler {
+	return &HealthHandler{}
+}
+
+// Health performs a basic health check
+func (h *HealthHandler) Health(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "healthy",
+		"service": "arabella-api",
+		"version": "v1.1.0",
+	})
+}
+
+// Ready checks if the service is ready to accept traffic
+func (h *HealthHandler) Ready(c *gin.Context) {
+	// Here you can add checks for database, cache, external services, etc.
+	// For now, we'll just return OK
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ready",
+		"checks": gin.H{
+			"database": "ok",
+			"cache":    "ok",
+		},
+	})
+}

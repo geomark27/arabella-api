@@ -1,0 +1,46 @@
+package server
+
+import (
+	"net/http"
+	"arabella-api/internal/app/handlers"
+	"github.com/gin-gonic/gin"
+)
+
+// registerRoutes registers all application routes
+func registerRoutes(
+	router *gin.Engine,
+	healthHandler *handlers.HealthHandler,
+) {
+	// Root route
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Welcome to arabella-api!",
+			"status":  "success",
+			"version": "v1.1.0",
+			"generated_with": "Loom",
+			"endpoints": gin.H{
+				"health": "/api/v1/health",
+				"users":  "/api/v1/users",
+				"docs":   "/docs/API.md",
+			},
+		})
+	})
+
+	// API v1 group
+	api := router.Group("/api/v1")
+	{
+		// Health routes
+		api.GET("/health", healthHandler.Health)
+		api.GET("/health/ready", healthHandler.Ready)
+
+		// User routes
+		/* users := api.Group("/users")
+		{
+			users.GET("", userHandler.GetUsers)
+			users.POST("", userHandler.CreateUser)
+			users.GET("/:id", userHandler.GetUser)
+			users.PUT("/:id", userHandler.UpdateUser)
+			users.DELETE("/:id", userHandler.DeleteUser)
+		} */
+	}
+}
