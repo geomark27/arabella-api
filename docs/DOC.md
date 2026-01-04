@@ -121,17 +121,21 @@ tipos de cambio y proyecciones de flujo de caja (*Runway*).
 
 ### Base de Datos
 
--   **Motor:** **SQL Server 2022** (Express o Web Edition en AWS RDS).
+-   **Motor:** **PostgreSQL 14+** (cambio de SQL Server por simplicidad y costo).
+
+-   **ORM:** **GORM** (Go Object-Relational Mapping).
 
 -   **Features Clave:**
 
-    -   **Temporal Tables:** Para auditoría histórica automática
-        > (SYSTEM_VERSIONING = ON).
+    -   **Soft Deletes:** GORM maneja eliminación lógica con `deleted_at`.
 
-    -   **Constraints:** Para asegurar SUM(Debit) = SUM(Credit).
+    -   **Auto Migrations:** Sincronización automática de esquema con modelos.
 
-    -   **Tipos de Datos:** DECIMAL(19,4) para precisión monetaria
-        > absoluta.
+    -   **Constraints:** Validaciones a nivel de BD para integridad.
+
+    -   **Tipos de Datos:** DECIMAL para precisión monetaria absoluta.
+
+    -   **Timestamps:** created_at, updated_at automáticos.
 
 ### Infraestructura (AWS - Serverless First)
 
@@ -147,93 +151,423 @@ tipos de cambio y proyecciones de flujo de caja (*Runway*).
 
 ## 5. Definición del MVP (Producto Mínimo Viable)
 
-El MVP se centrará en la **solidez del dato**. No buscaremos la
-automatización total en el día 1, sino la integridad total.
+El MVP se centra en la **solidez del dato** e **integridad contable**. 
+No buscamos automatización total en día 1, sino integridad absoluta del sistema.
 
-### Alcance Funcional MVP
+### Estado Actual del MVP
 
-1.  **Gestión de Cuentas:** Crear cuentas bancarias (USD/Local),
-    > efectivo y tarjetas.
+#### ✅ IMPLEMENTADO (Backend - 95%)
 
-2.  **Registro Manual Optimizado:** Interfaz rápida para registrar
-    > gastos/ingresos.
+1.  **✅ Gestión de Cuentas Completa**
+    - CRUD de cuentas bancarias (Multi-moneda: USD, MXN, EUR, etc.)
+    - Tipos: BANK, CASH, CREDIT_CARD, INVESTMENT, CATEGORY
+    - Clasificación: ASSET, LIABILITY, EQUITY, INCOME, EXPENSE
+    - Balance automático actualizado por motor contable
 
-3.  **Motor de Doble Partida:** El backend procesa todo como asientos
-    > contables.
+2.  **✅ Motor de Doble Partida (Accounting Engine)**
+    - Procesamiento automático de transacciones
+    - Generación de Journal Entries (Debit + Credit)
+    - Validación: SUM(Debits) = SUM(Credits)
+    - Transacciones atómicas (rollback en errores)
+    - Actualización automática de balances
 
-4.  **Dashboard Básico:** Saldo actual real, Gastos del mes, Deuda
-    > total.
+3.  **✅ Gestión de Transacciones**
+    - Tipos: INCOME, EXPENSE, TRANSFER, DEBT_PAYMENT
+    - Manejo de categorías
+    - Multi-moneda con tipo de cambio manual
+    - Notas y metadatos
+    - Audit trail completo (Journal Entries)
 
-5.  **Multi-moneda Básico:** Registro manual de la tasa de cambio al
-    > momento de la transacción.
+4.  **✅ Dashboard con Feature Estrella**
+    - **Cálculo de Runway** (meses de supervivencia)
+    - Net Worth (Activos - Pasivos)
+    - Activos líquidos vs totales
+    - Gastos/Ingresos mensuales
+    - Balance por cuenta
 
-*Nota: La automatización por correo (AWS SES) quedará maquetada en
-arquitectura pero se implementará en la Fase 2.*
+5.  **✅ Multi-moneda Básico**
+    - Soporte de múltiples divisas
+    - Tipo de cambio manual al momento de transacción
+    - Cálculo de balances en diferentes monedas
+
+6.  **✅ Sistema de Usuarios**
+    - Registro de usuarios
+    - Autenticación con bcrypt
+    - Multi-tenant ready (userID en todas las entidades)
+
+#### ⚠️ PENDIENTE (Para MVP Completo)
+
+1.  **Frontend (Fase 3 - 0%)**
+    - Interfaz web en Next.js
+    - Formularios de registro rápido
+    - Dashboard visual
+    - Gráficas de tendencias
+
+2.  **Autenticación JWT (Fase 2 - 0%)**
+    - Login endpoint con generación de tokens
+    - Middleware de protección
+    - Refresh tokens
+    - Extracción de userID del contexto
+
+3.  **Tests Unitarios (Fase 2 - 0%)**
+    - Tests del Accounting Engine
+    - Tests de validaciones
+    - Tests de integración de endpoints
+    - Cobertura objetivo: >70%
+
+4.  **Tax Shield Automático (Fase 4 - 0%)**
+    - Configuración de reglas fiscales
+    - Apartado automático de impuestos
+    - Cuentas virtuales
+
+5.  **Email Parsing (Fase 5 - 0%)**
+    - AWS SES + Lambda
+    - Parsers de emails bancarios
+    - Queue de aprobación
+
+*Nota: La automatización por correo (AWS SES) queda para Fase 5, 
+el foco inicial es solidez del sistema manual.*
 
 ## 6. Fases y Tiempos Estimados (Roadmap)
 
-Considerando un dedicación \"Side Project\" (10-15 horas semanales).
+Considerando un dedicación "Side Project" (10-15 horas semanales).
 
-### Fase 1: Fundamentos y Arquitectura (Semanas 1-3)
+### ✅ FASE 1: COMPLETADA - Fundamentos y Motor Contable
 
--   Diseño del Esquema de Base de Datos (ERD) en SQL Server.
+**Estado:** 95% Completo | **Tiempo Real:** Semanas 1-4
 
--   Configuración del repo (Go + Next.js).
+#### Implementado:
+- ✅ **Arquitectura Clean Architecture** (handlers → services → repositories → models)
+- ✅ **Base de Datos PostgreSQL** con GORM (migraciones automáticas)
+- ✅ **Motor de Contabilidad de Doble Partida** (`AccountingEngineService`)
+  - Generación automática de asientos contables (Journal Entries)
+  - Validación Débito = Crédito
+  - Transacciones atómicas en BD
+- ✅ **Modelos Completos:**
+  - Users (con bcrypt para passwords)
+  - Accounts (Bancos, Efectivo, Tarjetas, Categorías)
+  - Transactions (INCOME, EXPENSE, TRANSFER, DEBT_PAYMENT)
+  - JournalEntries (Audit trail completo)
+  - Categories (Gastos/Ingresos)
+  - Currencies (Multi-moneda)
+  - SystemValues (Configuración)
 
--   Implementación del \"Core\" en Go (Lógica de asientos contables y
-    > validaciones).
+- ✅ **API REST Completa (30+ endpoints):**
+  - Health checks
+  - Users CRUD
+  - Accounts CRUD
+  - Transactions CRUD (pasa por Accounting Engine)
+  - Categories CRUD
+  - Currencies (read-only)
+  - Journal Entries (read-only, auditoría)
+  - **Dashboard con Runway Calculation** ⭐ (Feature Estrella)
 
--   Despliegue inicial de infraestructura \"Hello World\" en AWS
-    > (Terraform/CDK).
+- ✅ **Features Avanzadas:**
+  - Cálculo de Runway (meses de supervivencia financiera)
+  - Stats mensuales (ingresos, gastos, balance)
+  - Separación de Activos Líquidos vs No Líquidos
+  - Manejo de múltiples monedas
+  - CORS configurado
+  - Seeders de base de datos
 
-### Fase 2: API y Lógica de Negocio (Semanas 4-6)
+#### Pendiente de Fase 1 (5%):
+- ⚠️ Tests unitarios del motor contable
+- ⚠️ Documentación Swagger/OpenAPI completa
+- ⚠️ Dockerfile para desarrollo local
 
--   Endpoints CRUD para Cuentas y Transacciones.
+---
 
--   Implementación de lógica de Tarjetas de Crédito y Deudas.
+### 🔄 FASE 2: Backend Hardening y Testing (Semanas 5-7)
 
--   Tests unitarios del motor contable (Crítico).
+**Objetivo:** Asegurar calidad y robustez del backend antes del frontend
 
-### Fase 3: Frontend y UX (Semanas 7-10)
+#### Tareas Críticas:
+1. **Testing (Semana 5)**
+   - Tests unitarios del `AccountingEngineService`
+   - Tests de integración para endpoints críticos
+   - Tests de validación de balance contable
+   - Cobertura mínima objetivo: 70%
 
--   Desarrollo de la UI en Next.js.
+2. **Validaciones y Seguridad (Semana 6)**
+   - Middleware de autenticación JWT
+   - Rate limiting básico
+   - Validación robusta de DTOs
+   - Sanitización de inputs
+   - Error handling consistente
 
--   Integración con la API.
+3. **Optimizaciones (Semana 7)**
+   - Índices en BD para queries frecuentes
+   - Paginación en endpoints de listado
+   - Caching básico (si es necesario)
+   - Logging estructurado
+   - Docker Compose para desarrollo
 
--   Dashboards y Gráficos (Recharts o Tremor).
+#### Entregables:
+- ✅ Suite de tests con >70% cobertura
+- ✅ API documentada (Swagger)
+- ✅ Sistema de autenticación funcional
+- ✅ Docker setup para desarrollo
 
--   PWA Setup (Service Workers).
+---
 
-### Fase 4: Automatización AWS (Semanas 11-13)
+### 🎨 FASE 3: Frontend MVP (Semanas 8-11)
 
--   Configuración de AWS SES.
+**Objetivo:** Interfaz funcional para las operaciones core
 
--   Desarrollo de la Lambda Parser (Regex/Lógica de extracción de
-    > emails).
+#### Stack Frontend:
+- Next.js 14+ (App Router)
+- TypeScript
+- Tailwind CSS
+- TanStack Query (React Query)
+- Shadcn/UI o similar
 
--   Integración del flujo de \"Transacciones Pendientes de Aprobar\".
+#### Pantallas Mínimas (Semana 8-9):
+1. **Login/Registro**
+2. **Dashboard Principal**
+   - Resumen financiero
+   - **Runway Display** (feature estrella)
+   - Gráfica de tendencia mensual
+3. **Cuentas**
+   - Lista de cuentas
+   - Crear/Editar cuenta
+   - Ver detalle y transacciones
+4. **Transacciones**
+   - Formulario rápido de registro
+   - Lista con filtros
+   - Detalle de transacción
 
-**Tiempo Total Estimado al MVP:** 3 a 3.5 meses.
+#### Features UX (Semana 10-11):
+- Formulario optimizado "one-thumb" para móvil
+- Categorías con íconos
+- Conversión de monedas en tiempo real
+- Validaciones inline
+- Estados de carga y errores
+- PWA básico (Service Workers)
+
+#### Entregables:
+- ✅ App funcional desplegada
+- ✅ CRUD completo desde UI
+- ✅ Dashboard con métricas clave
+- ✅ Responsive design
+
+---
+
+### 🚀 FASE 4: Features Avanzadas y Tax Shield (Semanas 12-14)
+
+**Objetivo:** Implementar diferenciadores clave del producto
+
+#### Features a Implementar:
+1. **Tax Shield Automático** ⭐
+   - Configuración de reglas de impuestos por usuario
+   - Cuentas virtuales automáticas
+   - Apartado automático en cada ingreso
+   - Dashboard de obligaciones fiscales
+
+2. **Reportes y Exports**
+   - Export a CSV/Excel
+   - Reporte PDF mensual
+   - Gráficas avanzadas (Recharts/Tremor)
+   - Tendencias por categoría
+
+3. **Gestión de Deuda Inteligente**
+   - Vista de deudas próximas a vencer
+   - Recordatorios de pagos
+   - Simulador de pago de deudas
+
+4. **Multi-moneda Avanzado**
+   - Integración API de tipos de cambio
+   - Detección automática de pérdidas por spread
+   - Conversión automática en reportes
+
+#### Entregables:
+- ✅ Tax Shield funcional
+- ✅ Sistema de reportes
+- ✅ Alertas y notificaciones
+- ✅ Manejo avanzado de divisas
+
+---
+
+### ☁️ FASE 5: Automatización y Escalabilidad (Semanas 15-17)
+
+**Objetivo:** Reducir fricción de entrada manual
+
+#### Implementación AWS:
+1. **Email Parsing (AWS SES + Lambda)**
+   - Configuración de AWS SES
+   - Lambda parser de emails bancarios
+   - S3 para almacenar emails originales
+   - Queue de transacciones pendientes de aprobar
+
+2. **Infraestructura como Código**
+   - Terraform o AWS CDK
+   - CI/CD con GitHub Actions
+   - Ambientes (dev, staging, prod)
+   - Backups automáticos de BD
+
+3. **Monitoreo y Observabilidad**
+   - CloudWatch Logs
+   - Métricas de uso
+   - Alertas de errores
+   - APM básico
+
+#### Entregables:
+- ✅ Ingesta automática de emails
+- ✅ Despliegue automatizado
+- ✅ Monitoreo en producción
+- ✅ Backups configurados
+
+---
+
+### 🎯 FASE 6: Pulido y Lanzamiento Beta (Semanas 18-20)
+
+**Objetivo:** Preparar para primeros usuarios reales
+
+#### Actividades:
+1. **Testing End-to-End**
+   - Casos de uso completos
+   - Testing con usuarios beta
+   - Corrección de bugs
+
+2. **Documentación**
+   - Guía de usuario
+   - FAQs
+   - Videos tutoriales
+
+3. **Performance**
+   - Optimización de queries lentas
+   - Lazy loading en frontend
+   - Compresión de assets
+
+4. **Legal y Términos**
+   - Términos y condiciones
+   - Política de privacidad
+   - GDPR básico
+
+#### Entregables:
+- ✅ Beta cerrada con 10-20 usuarios
+- ✅ Documentación completa
+- ✅ Sistema estable y monitoreado
+
+---
+
+**Tiempo Total Estimado al MVP Completo:** 4-5 meses
+
+**Estado Actual:** Fase 1 casi completa, listo para Fase 2
 
 ## 7. Posibles Áreas de Mejora y Riesgos
 
-1.  **Fricción de Usuario:** Si el registro manual es lento, el usuario
-    > abandona.
+### Riesgos Técnicos
 
-    -   *Mitigación:* UI optimizada \"One-thumb\" (uso con una mano).
+1.  **Ausencia de Tests** ⚠️ CRÍTICO
+    -   *Impacto:* El motor contable sin tests puede tener bugs que causen inconsistencias de datos.
+    -   *Mitigación:* Priorizar tests del `AccountingEngineService` en Fase 2 antes de continuar.
 
-2.  **Variabilidad de Emails:** Los bancos cambian formatos de correo.
+2.  **Fricción de Usuario:** Si el registro manual es lento, el usuario abandona.
+    -   *Mitigación:* UI optimizada "One-thumb" (uso con una mano), formularios inteligentes con defaults.
 
-    -   *Mitigación:* Arquitectura de parsers modulares (Strategy
-        > Pattern) fácil de actualizar sin redeployar todo el backend.
+3.  **Variabilidad de Emails:** Los bancos cambian formatos de correo.
+    -   *Mitigación:* Arquitectura de parsers modulares (Strategy Pattern) fácil de actualizar sin redeployar todo el backend.
 
-3.  **Costos de AWS:** SQL Server en RDS puede ser caro si no se cuida
-    > la capa gratuita o instancias reservadas.
+4.  **Costos de Infraestructura:**
+    -   PostgreSQL en RDS puede ser costoso inicialmente.
+    -   *Mitigación:* Iniciar con PostgreSQL en Docker local/Railway/Supabase, migrar a RDS solo al escalar.
+    -   Lambda puede generar costos inesperados con alto tráfico.
+    -   *Mitigación:* Implementar rate limiting y monitoreo de costos desde día 1.
 
-    -   *Mitigación:* Iniciar con SQL Server Express en una EC2 pequeña
-        > o Dockerizado, migrar a RDS solo al escalar.
+### Riesgos de Producto
 
-## 8. Siguiente Paso Sugerido
+5.  **Complejidad Oculta:** Los usuarios pueden no entender por qué su balance difiere de lo que ven en el banco.
+    -   *Mitigación:* UI clara que explique transacciones pendientes, tipos de cambio, etc.
 
-Para arrancar con el pie derecho, el siguiente paso lógico es definir el
-**Modelo de Datos**.
+6.  **Abandono Temprano:** Si no ven valor en los primeros 7 días, no regresan.
+    -   *Mitigación:* Onboarding guiado que muestre el Runway desde el primer día con datos de ejemplo.
+
+---
+
+## 8. Siguiente Paso Inmediato
+
+### Prioridad #1: Tests del Motor Contable
+
+Antes de avanzar al frontend, **es crítico** tener tests del `AccountingEngineService`:
+
+```go
+// Casos de prueba mínimos requeridos:
+1. Test_ProcessExpense_DebitCredit_Balance
+2. Test_ProcessIncome_DebitCredit_Balance
+3. Test_ProcessTransfer_MultiCurrency
+4. Test_ProcessDebtPayment_CreditCard
+5. Test_ReverseTransaction_RestoresBalances
+6. Test_InvalidTransaction_RollbackOnError
+7. Test_ConcurrentTransactions_ThreadSafety
+```
+
+### Prioridad #2: Autenticación JWT
+
+Implementar middleware de autenticación para proteger endpoints:
+- Login endpoint que genere JWT
+- Middleware que valide token en cada request
+- Extracción de `userID` del token (resolver los TODOs actuales)
+
+### Prioridad #3: Docker Development Setup
+
+Crear `docker-compose.yml` para levantar:
+- PostgreSQL
+- API de Arabella
+- (Opcional) Adminer/pgAdmin para visualizar BD
+
+Esto facilitará onboarding de nuevos desarrolladores y testing local.
+
+---
+
+## 9. Estado Actual del Proyecto (Enero 2026)
+
+### Lo que Ya Funciona ✅
+- Backend API completo con 30+ endpoints
+- Motor de contabilidad de doble partida funcionando
+- Dashboard con cálculo de Runway
+- Multi-moneda básico
+- Seeders para datos de prueba
+- CORS configurado
+
+### Lo que Falta para MVP ⚠️
+- Tests unitarios (CRÍTICO)
+- Autenticación JWT
+- Frontend (Next.js)
+- Tax Shield automático
+- Email parsing (AWS SES)
+- Despliegue en cloud
+
+### Deuda Técnica Conocida
+- TODOs en handlers: `userID` hardcodeado a 1
+- Falta validación exhaustiva de DTOs
+- Sin logging estructurado
+- Sin manejo de errores consistente
+- Documentación Swagger incompleta
+
+---
+
+## 10. Métricas de Éxito del MVP
+
+Para considerar el MVP "listo para beta":
+
+1. **Funcionalidad:**
+   - [ ] Registro de 100 transacciones sin errores
+   - [ ] Cálculo de Runway preciso
+   - [ ] Balance contable siempre cuadra (Debits = Credits)
+
+2. **Calidad:**
+   - [ ] Cobertura de tests >70%
+   - [ ] API response time <200ms (p95)
+   - [ ] Zero downtime en 7 días
+
+3. **UX:**
+   - [ ] Registrar gasto toma <10 segundos
+   - [ ] Dashboard carga en <1 segundo
+   - [ ] Funciona en móvil
+
+4. **Usuarios:**
+   - [ ] 10 usuarios beta activos
+   - [ ] Retención 7 días >60%
+   - [ ] Al menos 1 usuario con >30 días de uso
+
+---

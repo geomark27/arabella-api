@@ -12,8 +12,7 @@ type Seeder interface {
 // AllSeeders contains all seeders for execution
 // Seeders will run in the order they are defined
 var AllSeeders = []Seeder{
-	&UserSeeder{},
-	// Add your seeders here, e.g.:
-	// &ProductSeeder{},
-	// &RoleSeeder{},
+	&SystemValueSeeder{}, // Run first - provides catalogs
+	&UserSeeder{},        // Run second - creates users
+	// Add more seeders here as needed
 }

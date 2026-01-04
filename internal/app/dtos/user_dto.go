@@ -2,22 +2,22 @@ package dtos
 
 // CreateUserDTO representa los datos para crear un usuario
 type CreateUserDTO struct {
-	Name  string `json:"name" validate:"required"`
-	Email string `json:"email" validate:"required,email"`
-	Age   int    `json:"age" validate:"required,min=0,max=150"`
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
 }
 
 // UpdateUserDTO representa los datos para actualizar un usuario
 type UpdateUserDTO struct {
-	Name  *string `json:"name,omitempty"`
-	Email *string `json:"email,omitempty"`
-	Age   *int    `json:"age,omitempty"`
+	FirstName *string `json:"first_name,omitempty"`
+	LastName  *string `json:"last_name,omitempty"`
+	Email     *string `json:"email,omitempty"`
 }
 
 // UserResponseDTO representa la respuesta de un usuario (sin datos sensibles)
 type UserResponseDTO struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Age   int    `json:"age"`
+	ID        int    `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
 }

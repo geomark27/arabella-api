@@ -95,3 +95,6 @@ __debug_bin
 .terraform/
 terraform.tfstate*
 *.tfvars
+
+#MARKDOWN PERSONALES
+docs/BUSINESS_MODEL.md

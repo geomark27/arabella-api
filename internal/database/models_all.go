@@ -13,7 +13,4 @@ var AllModels = []interface{}{
 	&models.Category{},
 	&models.Transaction{},
 	&models.JournalEntry{},
-	// Add your models here, e.g.:
-	// &models.Product{},
-	// &models.Order{},
 }

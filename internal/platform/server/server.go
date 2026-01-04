@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"arabella-api/internal/app/handlers"
+	"arabella-api/internal/app/repositories"
+	"arabella-api/internal/app/services"
 	"arabella-api/internal/platform/config"
 
 	"github.com/gin-gonic/gin"
@@ -26,15 +28,41 @@ func New(cfg *config.Config, db *gorm.DB) *Server {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// ========================================
+	// DEPENDENCY INJECTION - PHASE 1
+	// ========================================
+
 	// Create repositories
-	//userRepo := repositories.NewUserRepository()
+	userRepo := repositories.NewUserRepository(db)
+	accountRepo := repositories.NewAccountRepository(db)
+	transactionRepo := repositories.NewTransactionRepository(db)
+	journalEntryRepo := repositories.NewJournalEntryRepository(db)
+	categoryRepo := repositories.NewCategoryRepository(db)
+	currencyRepo := repositories.NewCurrencyRepository(db)
+	systemValueRepo := repositories.NewSystemValueRepository(db)
 
 	// Create services (injecting repositories)
-	//userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo)
+	accountingEngine := services.NewAccountingEngineService(db, journalEntryRepo, accountRepo, transactionRepo)
+	transactionService := services.NewTransactionService(transactionRepo, accountingEngine)
+	accountService := services.NewAccountService(accountRepo, systemValueRepo)
+	dashboardService := services.NewDashboardService(accountRepo, transactionRepo)
+	categoryService := services.NewCategoryService(categoryRepo)
+	currencyService := services.NewCurrencyService(currencyRepo)
+	systemValueService := services.NewSystemValueService(systemValueRepo)
+	journalEntryService := services.NewJournalEntryService(journalEntryRepo)
 
 	// Create handlers (injecting services)
 	healthHandler := handlers.NewHealthHandler()
-	//userHandler := handlers.NewUserHandler(userService)
+	userHandler := handlers.NewUserHandler(userService)
+	accountHandler := handlers.NewAccountHandler(accountService)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+	currencyHandler := handlers.NewCurrencyHandler(currencyService)
+	systemValueHandler := handlers.NewSystemValueHandler(systemValueService)
+	journalEntryHandler := handlers.NewJournalEntryHandler(journalEntryService)
+
 	// Create Gin router
 	router := gin.Default()
 
@@ -42,7 +70,18 @@ func New(cfg *config.Config, db *gorm.DB) *Server {
 	router.Use(corsMiddleware(cfg.CorsAllowedOrigins))
 
 	// Register routes
-	registerRoutes(router, healthHandler, /* userHandler */)
+	registerRoutes(
+		router,
+		healthHandler,
+		userHandler,
+		accountHandler,
+		transactionHandler,
+		categoryHandler,
+		currencyHandler,
+		systemValueHandler,
+		journalEntryHandler,
+		dashboardHandler,
+	)
 
 	// Configure HTTP server
 	httpServer := &http.Server{

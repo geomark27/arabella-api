@@ -6,11 +6,35 @@
 APP_NAME=arabella-api
 BUILD_DIR=build
 CMD_DIR=cmd/$(APP_NAME)
+BRANCH := $(shell git branch --show-current)
 
 # Comandos principales
 help: ## Muestra esta ayuda
-	@echo "Comandos disponibles:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo "📋 Comandos disponibles:"
+	@echo ""
+	@echo "  🔨 Compilación y Ejecución:"
+	@echo "    make build        - Compila la aplicación"
+	@echo "    make run          - Ejecuta la aplicación"
+	@echo "    make dev          - Modo desarrollo con hot reload (requiere air)"
+	@echo ""
+	@echo "  🧪 Testing y Calidad:"
+	@echo "    make test         - Ejecuta los tests"
+	@echo "    make test-coverage - Ejecuta tests con cobertura"
+	@echo "    make fmt          - Formatea el código"
+	@echo "    make vet          - Ejecuta go vet"
+	@echo "    make lint         - Ejecuta golangci-lint"
+	@echo ""
+	@echo "  📦 Git (rama actual: $(BRANCH)):"
+	@echo "    make push m='mensaje' - Add + Commit + Push a $(BRANCH)"
+	@echo "    make pull             - Pull desde origin/$(BRANCH)"
+	@echo "    make status           - Ver estado de git"
+	@echo "    make sync m='mensaje' - Pull + Push (sincronizar)"
+	@echo ""
+	@echo "  🧹 Utilidades:"
+	@echo "    make clean        - Limpia archivos generados"
+	@echo "    make deps         - Descarga las dependencias"
+	@echo "    make install-tools - Instala herramientas de desarrollo"
+	@echo ""
 
 build: ## Compila la aplicación
 	@echo "🔨 Compilando $(APP_NAME)..."
@@ -63,6 +87,55 @@ install-tools: ## Instala herramientas de desarrollo
 	@echo "🛠️  Instalando herramientas de desarrollo..."
 	@go install github.com/cosmtrek/air@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# ============================================
+# COMANDOS GIT
+# ============================================
+
+# Push rápido: make push m="tu mensaje"
+push:
+	@if [ -z "$(m)" ]; then \
+		echo "❌ Error: Debes proporcionar un mensaje"; \
+		echo "   Uso: make push m='tu mensaje de commit'"; \
+		exit 1; \
+	fi
+	@echo "📦 Agregando archivos..."
+	@git add .
+	@echo "✍️  Commiteando: $(m)"
+	@git commit -m "$(m)"
+	@echo "🚀 Pusheando a origin/$(BRANCH)..."
+	@git push origin $(BRANCH)
+	@echo "✅ Push completado exitosamente!"
+
+# Pull desde origin
+pull:
+	@echo "⬇️  Pulling desde origin/$(BRANCH)..."
+	@git fetch origin
+	@git pull origin $(BRANCH)
+	@echo "✅ Pull completado!"
+
+# Ver estado de git
+status:
+	@echo "📊 Estado de Git (rama: $(BRANCH)):"
+	@echo ""
+	@git status
+
+# Sincronizar (pull + push)
+sync:
+	@if [ -z "$(m)" ]; then \
+		echo "❌ Error: Debes proporcionar un mensaje"; \
+		echo "   Uso: make sync m='tu mensaje de commit'"; \
+		exit 1; \
+	fi
+	@echo "⬇️  Pulling cambios..."
+	@git pull origin $(BRANCH)
+	@echo "📦 Agregando archivos..."
+	@git add .
+	@echo "✍️  Commiteando: $(m)"
+	@git commit -m "$(m)"
+	@echo "🚀 Pusheando a origin/$(BRANCH)..."
+	@git push origin $(BRANCH)
+	@echo "✅ Sincronización completada!"
 
 # Comandos de base de datos (para futuras implementaciones)
 db-migrate: ## Ejecuta migraciones (cuando se implemente)
