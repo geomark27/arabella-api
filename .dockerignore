@@ -1,0 +1,57 @@
+# Archivos de desarrollo
+.env
+.env.example
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentación markdown (no el código de docs/)
+*.md
+
+# Tests y coverage
+*_test.go
+coverage.out
+coverage.html
+*.coverprofile
+
+# Build artifacts
+build/
+dist/
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Temporales
+tmp/
+temp/
+*.tmp
+
+# Scripts de desarrollo
+scripts/
+Makefile
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Otros
+.air.toml
