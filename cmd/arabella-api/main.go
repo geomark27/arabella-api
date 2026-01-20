@@ -51,7 +51,7 @@ func main() {
 	srv := server.New(cfg, db)
 
 	// Mensaje de inicio
-	log.Printf("🚀 Servidor %s iniciado en http://localhost:%s", "dvra-api", cfg.Port)
+	log.Printf("🚀 Servidor %s iniciado en http://localhost:%s", "arabella-api", cfg.Port)
 	log.Printf("✨ Proyecto generado con Loom")
 
 	// Iniciar servidor

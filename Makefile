@@ -1,4 +1,10 @@
-# arabella-api - Makefile generado por Loom
+# arabella-api - Makefile
+
+# Cargar variables de entorno desde .env
+ifneq (,$(wildcard .env))
+	include .env
+	export
+endif
 
 .PHONY: build run test clean fmt vet deps help
 
@@ -7,54 +13,42 @@ APP_NAME=arabella-api
 BUILD_DIR=build
 CMD_DIR=cmd/$(APP_NAME)
 BRANCH := $(shell git branch --show-current)
+COMPOSE_DEV=docker-compose -f docker-compose.dev.yml
+COMPOSE_PROD=docker-compose -f docker-compose.yml
 
 # Comandos principales
 help: ## Muestra esta ayuda
 	@echo "📋 Comandos disponibles:"
 	@echo ""
-	@echo "  🔨 Compilación y Ejecución:"
-	@echo "    make build        - Compila la aplicación"
-	@echo "    make run          - Ejecuta la aplicación"
-	@echo "    make dev          - Modo desarrollo con hot reload (requiere air)"
+	@echo "  🔨 Build & Run:"
+	@echo "    build | run | dev"
 	@echo ""
-	@echo "  🐳 Docker (API + DB):"
-	@echo "    make up           - Levanta toda la aplicación (API + DB)"
-	@echo "    make down         - Detiene toda la aplicación"
-	@echo "    make restart      - Reinicia toda la aplicación"
-	@echo "    make logs         - Muestra logs de todos los servicios"
-	@echo "    make logs-api     - Muestra logs solo de la API"
-	@echo "    make rebuild      - Reconstruye y levanta la API"
+	@echo "  🐳 Desarrollo (solo DB):"
+	@echo "    db-up [fresh=1] [location=1] - Inicia PostgreSQL + opciones"
+	@echo "    db-fresh                     - db-up + reset automático"
+	@echo "    db-fresh-full                - db-up + reset + locations"
+	@echo "    db-down | db-restart | db-logs | db-clean | db-shell"
 	@echo ""
-	@echo "  🐳 Docker/PostgreSQL (solo DB):"
-	@echo "    make db-up        - Inicia solo PostgreSQL en Docker"
-	@echo "    make db-down      - Detiene PostgreSQL"
-	@echo "    make db-restart   - Reinicia PostgreSQL"
-	@echo "    make db-logs      - Muestra logs de PostgreSQL"
-	@echo "    make db-clean     - Elimina PostgreSQL y volúmenes"
-	@echo "    make db-shell     - Accede a psql en el contenedor"
+	@echo "  🐳 Producción (API + DB):"
+	@echo "    up | down | restart | logs | logs-api | rebuild"
 	@echo ""
-	@echo "  🗃️  Base de Datos (LOOM):"
-	@echo "    make db-migrate   - Ejecuta migraciones"
-	@echo "    make db-seed      - Ejecuta seeders"
-	@echo "    make fresh        - Reset completo (clean DB + migrate + seed)"
+	@echo "  🗃️  Database:"
+	@echo "    db-migrate | db-seed | fresh"
 	@echo ""
-	@echo "  🧪 Testing y Calidad:"
-	@echo "    make test         - Ejecuta los tests"
-	@echo "    make test-coverage - Ejecuta tests con cobertura"
-	@echo "    make fmt          - Formatea el código"
-	@echo "    make vet          - Ejecuta go vet"
-	@echo "    make lint         - Ejecuta golangci-lint"
+	@echo "  🧪 Testing:"
+	@echo "    test | test-coverage | fmt | vet | lint"
 	@echo ""
-	@echo "  📦 Git (rama actual: $(BRANCH)):"
-	@echo "    make push m='mensaje' - Add + Commit + Push a $(BRANCH)"
-	@echo "    make pull             - Pull desde origin/$(BRANCH)"
-	@echo "    make status           - Ver estado de git"
-	@echo "    make sync m='mensaje' - Pull + Push (sincronizar)"
+	@echo "  📦 Git ($(BRANCH)):"
+	@echo "    push m='msg' | pull | status | sync m='msg'"
 	@echo ""
-	@echo "  🧹 Utilidades:"
-	@echo "    make clean        - Limpia archivos generados"
-	@echo "    make deps         - Descarga las dependencias"
-	@echo "    make install-tools - Instala herramientas de desarrollo"
+	@echo "  🧹 Utils:"
+	@echo "    clean | deps | install-tools"
+	@echo ""
+	@echo "  💡 Ejemplos:"
+	@echo "    make db-up                    → Solo DB"
+	@echo "    make db-up fresh=1            → DB + reset"
+	@echo "    make db-up fresh=1 location=1 → DB + reset + data"
+	@echo "    make db-fresh                 → Atajo rápido"
 	@echo ""
 
 build: ## Compila la aplicación
@@ -113,7 +107,7 @@ dev-full: ## Setup completo desarrollo (DB + migrate + seed + run)
 	@echo "✅ Ready! Starting API..."
 	@go run $(CMD_DIR)/main.go
 
-fresh: ## Reset completo (clean DB + migrate + seed) - Usa loc=1 para incluir ubicaciones
+fresh: ## Reset completo (clean DB + migrate + seed)
 	@echo "🔄 Fresh install..."
 	@$(MAKE) db-clean
 	@$(MAKE) db-up
@@ -132,64 +126,87 @@ install-tools: ## Instala herramientas de desarrollo
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 # ============================================
-# COMANDOS DOCKER (API + DB)
+# COMANDOS DOCKER DESARROLLO (solo PostgreSQL)
 # ============================================
 
-up: ## Levanta toda la aplicación (API + PostgreSQL)
-	@echo "🚀 Starting Arabella API..."
-	@docker compose up -d
+db-up: ## Inicia PostgreSQL [usa fresh=1 para reset completo]
+	@echo "🐳 Starting PostgreSQL (DEV MODE)..."
+	@$(COMPOSE_DEV) up -d postgres
+	@echo "✅ PostgreSQL running on localhost:$(DB_PORT)"
+	@if [ "$(fresh)" = "1" ]; then \
+		echo ""; \
+		echo "🔄 Fresh flag detected! Running database reset..."; \
+		echo "⏳ Waiting for PostgreSQL to be ready..."; \
+		sleep 3; \
+		loom db:fresh --seed; \
+		if [ "$(location)" = "1" ]; then \
+			echo "🌍 Poblando ubicaciones..."; \
+			$(MAKE) db-location; \
+		fi; \
+		echo "✅ Database fresh and seeded!"; \
+	else \
+		echo "💡 TIP: Corre tu API con 'make run' o 'make dev'"; \
+		echo "💡 Para reset completo usa: make db-up fresh=1"; \
+	fi
+
+db-down: ## Detiene PostgreSQL
+	@echo "🛑 Stopping PostgreSQL..."
+	@$(COMPOSE_DEV) stop postgres
+
+db-restart: ## Reinicia PostgreSQL
+	@echo "🔄 Restarting PostgreSQL..."
+	@$(COMPOSE_DEV) restart postgres
+
+db-logs: ## Muestra logs de PostgreSQL
+	@$(COMPOSE_DEV) logs -f postgres
+
+db-clean: ## Elimina PostgreSQL y volúmenes
+	@echo "🧹 Cleaning database..."
+	@$(COMPOSE_DEV) down -v
+	@echo "✅ Database cleaned"
+
+db-shell: ## Accede a psql en el contenedor
+	@$(COMPOSE_DEV) exec postgres psql -U $(DB_USER) -d $(DB_NAME)
+
+db-fresh: ## Alias: db-up con fresh automático
+	@$(MAKE) db-up fresh=1
+
+db-fresh-full: ## Alias: db-up + fresh + locations
+	@$(MAKE) db-up fresh=1 location=1
+
+# ============================================
+# COMANDOS DOCKER PRODUCCIÓN (API + DB)
+# ============================================
+
+up: ## Levanta toda la aplicación (API + PostgreSQL) - PRODUCCIÓN
+	@echo "🚀 Starting Arabella API (PRODUCTION MODE)..."
+	@$(COMPOSE_PROD) up -d
 	@echo "✅ API running on http://localhost:$(PORT)"
 
 down: ## Detiene toda la aplicación
 	@echo "🛑 Stopping Arabella..."
-	@docker compose down
+	@$(COMPOSE_PROD) down
 
 restart: ## Reinicia toda la aplicación
 	@echo "🔄 Restarting Arabella..."
-	@docker compose restart
+	@$(COMPOSE_PROD) restart
 
 logs: ## Muestra logs de todos los servicios
-	@docker compose logs -f
+	@$(COMPOSE_PROD) logs -f
 
 logs-api: ## Muestra logs solo de la API
-	@docker compose logs -f api
+	@$(COMPOSE_PROD) logs -f app
 
 rebuild: ## Reconstruye y levanta la API
 	@echo "🔨 Rebuilding Arabella API..."
-	@docker compose build --no-cache api
-	@docker compose up -d api
+	@$(COMPOSE_PROD) build --no-cache app
+	@$(COMPOSE_PROD) up -d app
 	@echo "✅ API rebuilt and running!"
-
-# Comandos de Docker (solo PostgreSQL)
-db-up: ## Inicia solo PostgreSQL en Docker
-	@echo "🐳 Starting PostgreSQL..."
-	@docker compose up -d postgres
-	@echo "✅ PostgreSQL running on localhost:$(DB_PORT)"
-
-db-down: ## Detiene PostgreSQL
-	@echo "🛑 Stopping PostgreSQL..."
-	@docker compose stop postgres
-
-db-restart: ## Reinicia PostgreSQL
-	@echo "🔄 Restarting PostgreSQL..."
-	@docker compose restart postgres
-
-db-logs: ## Muestra logs de PostgreSQL
-	@docker compose logs -f postgres
-
-db-clean: ## Elimina PostgreSQL y volumenes
-	@echo "🧹 Cleaning database..."
-	@docker compose down -v
-	@echo "✅ Database cleaned"
-
-db-shell: ## Accede a psql en el contenedor
-	@docker compose exec postgres psql -U $(DB_USER) -d $(DB_NAME)
 
 # ============================================
 # COMANDOS GIT
 # ============================================
 
-# Push rápido: make push m="tu mensaje"
 push:
 	@if [ -z "$(m)" ]; then \
 		echo "❌ Error: Debes proporcionar un mensaje"; \
@@ -198,26 +215,23 @@ push:
 	fi
 	@echo "📦 Agregando archivos..."
 	@git add .
-	@echo "✍️  Commiteando: $(m)"
+	@echo "✏️  Commiteando: $(m)"
 	@git commit -m "$(m)"
 	@echo "🚀 Pusheando a origin/$(BRANCH)..."
 	@git push origin $(BRANCH)
 	@echo "✅ Push completado exitosamente!"
 
-# Pull desde origin
 pull:
 	@echo "⬇️  Pulling desde origin/$(BRANCH)..."
 	@git fetch origin
 	@git pull origin $(BRANCH)
 	@echo "✅ Pull completado!"
 
-# Ver estado de git
 status:
 	@echo "📊 Estado de Git (rama: $(BRANCH)):"
 	@echo ""
 	@git status
 
-# Sincronizar (pull + push)
 sync:
 	@if [ -z "$(m)" ]; then \
 		echo "❌ Error: Debes proporcionar un mensaje"; \
@@ -228,13 +242,12 @@ sync:
 	@git pull origin $(BRANCH)
 	@echo "📦 Agregando archivos..."
 	@git add .
-	@echo "✍️  Commiteando: $(m)"
+	@echo "✏️  Commiteando: $(m)"
 	@git commit -m "$(m)"
 	@echo "🚀 Pusheando a origin/$(BRANCH)..."
 	@git push origin $(BRANCH)
 	@echo "✅ Sincronización completada!"
 
-# Comandos de base de datos con LOOM
 db-migrate: ## Ejecuta migraciones con LOOM
 	@echo "🗃️  Running migrations..."
 	@loom db:migrate

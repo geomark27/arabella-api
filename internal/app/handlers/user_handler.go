@@ -34,8 +34,8 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data":  users,
-		"count": len(users),
+		"data":   users,
+		"count":  len(users),
 	})
 }
 
