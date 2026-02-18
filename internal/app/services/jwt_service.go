@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -62,7 +63,7 @@ func (s *jwtService) GenerateAccessToken(userID uint, email string) (string, err
 // GenerateRefreshToken generates a new refresh token
 func (s *jwtService) GenerateRefreshToken(userID uint) (string, error) {
 	claims := jwt.RegisteredClaims{
-		Subject:   string(rune(userID)),
+		Subject:   strconv.FormatUint(uint64(userID), 10),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.refreshTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}

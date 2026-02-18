@@ -13,4 +13,5 @@ var AllModels = []interface{}{
 	&models.Category{},
 	&models.Transaction{},
 	&models.JournalEntry{},
+	&models.Account{},
 }
