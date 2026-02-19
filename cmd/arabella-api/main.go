@@ -1,6 +1,8 @@
 package main
 
 import (
+	// Importar los docs generados por swag para registrarlos en el servidor
+	_ "arabella-api/docs/swagger"
 	"arabella-api/internal/database"
 	"arabella-api/internal/platform/config"
 	"arabella-api/internal/platform/server"
@@ -9,25 +11,25 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// @title           DVRA API
-// @version         1.2.0
-// @description     API para sistema de reclutamiento y gestión de candidatos
+// @title           Arabella Financial OS API
+// @version         1.0.0
+// @description     API REST para el sistema de gestión financiera personal Arabella. Implementa contabilidad de doble partida, cálculo de Runway y soporte multi-moneda.
 // @termsOfService  http://swagger.io/terms/
 
-// @contact.name   API Support
-// @contact.email  support@dvra.com
+// @contact.name   Arabella Support
+// @contact.email  support@arabella.app
 
 // @license.name  MIT
 // @license.url   https://opensource.org/licenses/MIT
 
-// @host      localhost:8001
+// @host      localhost:8080
 // @BasePath  /api/v1
 // @schemes   http https
 
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
-// @description Type "Bearer" followed by a space and JWT token.
+// @description Escribe "Bearer" seguido de un espacio y tu JWT de acceso. Ejemplo: "Bearer eyJhbGci..."
 
 func main() {
 	// Cargar variables de entorno desde .env

@@ -22,11 +22,27 @@ func NewJournalEntryHandler(journalEntryService services.JournalEntryService) *J
 	}
 }
 
-// GetJournalEntries retrieves journal entries (audit trail)
-// GET /api/v1/journal-entries?transaction_id=123&page=1
+// GetJournalEntries godoc
+// @Summary      Listar asientos contables (pista de auditoría)
+// @Description  Obtiene una lista paginada de asientos del diario contable del usuario autenticado. Los asientos son generados automáticamente por el Motor Contable al crear o revertir transacciones; nunca se crean ni modifican manualmente. Se pueden filtrar por transacción, cuenta o tipo (DEBIT/CREDIT)
+// @Tags         Journal Entries
+// @Produce      json
+// @Param        transaction_id  query     int     false  "Filtrar por ID de transacción"
+// @Param        account_id      query     int     false  "Filtrar por ID de cuenta"
+// @Param        debit_or_credit query     string  false  "Filtrar por tipo de asiento (DEBIT, CREDIT)"
+// @Param        page            query     int     false  "Número de página (default: 1)"
+// @Param        page_size       query     int     false  "Elementos por página (default: 50, máx: 100)"
+// @Success      200  {object}  dtos.JournalEntryListResponse  "Lista paginada de asientos contables"
+// @Failure      401  {object}  dtos.ErrorResponse             "No autenticado"
+// @Failure      500  {object}  dtos.ErrorResponse             "Error interno del servidor"
+// @Security     BearerAuth
+// @Router       /journal-entries [get]
 func (h *JournalEntryHandler) GetJournalEntries(c *gin.Context) {
-	// TODO: Get userID from authentication context
-	userID := uint(1)
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		respondUnauthorized(c)
+		return
+	}
 
 	filters := dtos.JournalEntryFilters{
 		Page:     parseIntParam(c, "page", 1),
@@ -61,8 +77,18 @@ func (h *JournalEntryHandler) GetJournalEntries(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// GetJournalEntriesByTransaction retrieves journal entries for a specific transaction
-// GET /api/v1/journal-entries/transaction/:id
+// GetJournalEntriesByTransaction godoc
+// @Summary      Asientos contables de una transacción
+// @Description  Obtiene todos los asientos de débito y crédito generados para una transacción específica. Cada transacción produce exactamente 2 asientos (uno DEBIT y uno CREDIT) que deben sumar igual, garantizando el equilibrio de la doble partida
+// @Tags         Journal Entries
+// @Produce      json
+// @Param        id   path      int                                                        true  "ID de la transacción"
+// @Success      200  {object}  object{data=[]dtos.JournalEntryResponse,count=int}         "Asientos de la transacción"
+// @Failure      400  {object}  dtos.ErrorResponse                                         "ID inválido"
+// @Failure      401  {object}  dtos.ErrorResponse                                         "No autenticado"
+// @Failure      500  {object}  dtos.ErrorResponse                                         "Error interno del servidor"
+// @Security     BearerAuth
+// @Router       /journal-entries/transaction/{id} [get]
 func (h *JournalEntryHandler) GetJournalEntriesByTransaction(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
@@ -88,8 +114,18 @@ func (h *JournalEntryHandler) GetJournalEntriesByTransaction(c *gin.Context) {
 	})
 }
 
-// VerifyTransactionBalance verifies that debits = credits for a transaction
-// GET /api/v1/journal-entries/verify/:id
+// VerifyTransactionBalance godoc
+// @Summary      Verificar equilibrio contable de una transacción
+// @Description  Verifica que la suma de todos los asientos DEBIT sea igual a la suma de los asientos CREDIT para una transacción dada. Esto garantiza la regla fundamental de la contabilidad de doble partida: ∑ Débitos = ∑ Créditos
+// @Tags         Journal Entries
+// @Produce      json
+// @Param        id   path      int                                     true  "ID de la transacción a verificar"
+// @Success      200  {object}  object{data=dtos.BalanceVerificationResponse}  "Resultado de la verificación con totales de débito y crédito"
+// @Failure      400  {object}  dtos.ErrorResponse                      "ID inválido"
+// @Failure      401  {object}  dtos.ErrorResponse                      "No autenticado"
+// @Failure      500  {object}  dtos.ErrorResponse                      "Error al ejecutar la verificación"
+// @Security     BearerAuth
+// @Router       /journal-entries/verify/{id} [get]
 func (h *JournalEntryHandler) VerifyTransactionBalance(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)

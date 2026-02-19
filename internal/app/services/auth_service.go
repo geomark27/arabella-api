@@ -136,14 +136,14 @@ func (s *AuthService) Login(dto *dtos.LoginDTO) (*dtos.LoginResponseDTO, error) 
 
 // RefreshToken generates new access and refresh tokens
 func (s *AuthService) RefreshToken(dto *dtos.RefreshTokenDTO) (*dtos.RefreshTokenResponseDTO, error) {
-	// Validate refresh token
-	claims, err := s.jwtService.ValidateToken(dto.RefreshToken)
+	// Validate refresh token using the dedicated refresh-token validator
+	// (signed with refreshSecret, only stores userID in Subject claim)
+	userID, err := s.jwtService.ValidateRefreshToken(dto.RefreshToken)
 	if err != nil {
-		return nil, errors.New("invalid refresh token")
+		return nil, errors.New("invalid or expired refresh token")
 	}
 
-	// Get user from claims
-	userID := claims.UserID
+	// Get user from the extracted userID
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, ErrUserNotFound

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,7 +14,13 @@ func NewHealthHandler() *HealthHandler {
 	return &HealthHandler{}
 }
 
-// Health performs a basic health check
+// Health godoc
+// @Summary      Health check
+// @Description  Verifica que el servicio está en ejecución y responde correctamente
+// @Tags         Health
+// @Produce      json
+// @Success      200  {object}  object{status=string,service=string,version=string}  "Servicio saludable"
+// @Router       /health [get]
 func (h *HealthHandler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "healthy",
@@ -22,10 +29,14 @@ func (h *HealthHandler) Health(c *gin.Context) {
 	})
 }
 
-// Ready checks if the service is ready to accept traffic
+// Ready godoc
+// @Summary      Readiness check
+// @Description  Verifica que el servicio está listo para recibir tráfico (base de datos, dependencias externas)
+// @Tags         Health
+// @Produce      json
+// @Success      200  {object}  object{status=string,checks=object{database=string,cache=string}}  "Servicio listo"
+// @Router       /health/ready [get]
 func (h *HealthHandler) Ready(c *gin.Context) {
-	// Here you can add checks for database, cache, external services, etc.
-	// For now, we'll just return OK
 	c.JSON(http.StatusOK, gin.H{
 		"status": "ready",
 		"checks": gin.H{

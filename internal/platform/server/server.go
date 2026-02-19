@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"arabella-api/internal/app/repositories"
 	"arabella-api/internal/app/services"
 	"arabella-api/internal/platform/config"
+	"arabella-api/internal/shared/middleware"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -29,8 +31,14 @@ func New(cfg *config.Config, db *gorm.DB) *Server {
 	}
 
 	// ========================================
-	// DEPENDENCY INJECTION - PHASE 1
+	// DEPENDENCY INJECTION
 	// ========================================
+
+	// Warn if JWT secrets are still using insecure defaults
+	if cfg.JWTSecret == "your-default-secret-change-in-production" ||
+		cfg.JWTRefreshSecret == "your-refresh-secret-change-in-production" {
+		log.Println("⚠️  WARNING: JWT secrets are using insecure default values. Set JWT_SECRET and JWT_REFRESH_SECRET environment variables.")
+	}
 
 	// Create repositories
 	userRepo := repositories.NewUserRepository(db)
@@ -42,7 +50,9 @@ func New(cfg *config.Config, db *gorm.DB) *Server {
 	systemValueRepo := repositories.NewSystemValueRepository(db)
 
 	// Create services (injecting repositories)
+	jwtService := services.NewJWTService(cfg.JWTSecret, cfg.JWTRefreshSecret)
 	userService := services.NewUserService(userRepo)
+	authService := services.NewAuthService(userRepo, jwtService, db)
 	accountingEngine := services.NewAccountingEngineService(db, journalEntryRepo, accountRepo, transactionRepo)
 	transactionService := services.NewTransactionService(transactionRepo, accountingEngine)
 	accountService := services.NewAccountService(accountRepo, systemValueRepo)
@@ -52,8 +62,12 @@ func New(cfg *config.Config, db *gorm.DB) *Server {
 	systemValueService := services.NewSystemValueService(systemValueRepo)
 	journalEntryService := services.NewJournalEntryService(journalEntryRepo)
 
+	// Create middleware
+	authMiddleware := middleware.NewAuthMiddleware(jwtService)
+
 	// Create handlers (injecting services)
 	healthHandler := handlers.NewHealthHandler()
+	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
 	accountHandler := handlers.NewAccountHandler(accountService)
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
@@ -72,7 +86,9 @@ func New(cfg *config.Config, db *gorm.DB) *Server {
 	// Register routes
 	registerRoutes(
 		router,
+		authMiddleware,
 		healthHandler,
+		authHandler,
 		userHandler,
 		accountHandler,
 		transactionHandler,

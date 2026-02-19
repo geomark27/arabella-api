@@ -21,11 +21,27 @@ func NewTransactionHandler(transactionService services.TransactionService) *Tran
 	}
 }
 
-// GetTransactions retrieves transactions with optional filters
-// GET /api/v1/transactions?type=EXPENSE&page=1&page_size=20
+// GetTransactions godoc
+// @Summary      Listar transacciones
+// @Description  Obtiene una lista paginada de transacciones del usuario autenticado con filtros opcionales. Cada transacción pasa por el Motor Contable de doble partida
+// @Tags         Transactions
+// @Produce      json
+// @Param        type         query     string  false  "Tipo de transacción (INCOME, EXPENSE, TRANSFER)"
+// @Param        account_id   query     int     false  "Filtrar por ID de cuenta"
+// @Param        category_id  query     int     false  "Filtrar por ID de categoría"
+// @Param        page         query     int     false  "Número de página (default: 1)"
+// @Param        page_size    query     int     false  "Elementos por página (default: 20, máx: 100)"
+// @Success      200  {object}  dtos.TransactionListResponse  "Lista de transacciones paginada"
+// @Failure      401  {object}  dtos.ErrorResponse            "No autenticado"
+// @Failure      500  {object}  dtos.ErrorResponse            "Error interno del servidor"
+// @Security     BearerAuth
+// @Router       /transactions [get]
 func (h *TransactionHandler) GetTransactions(c *gin.Context) {
-	// TODO: Get userID from authentication context
-	userID := uint(1)
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		respondUnauthorized(c)
+		return
+	}
 
 	// Parse filters from query params
 	filters := dtos.TransactionFilters{
@@ -58,8 +74,18 @@ func (h *TransactionHandler) GetTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// GetTransactionByID retrieves a specific transaction by ID
-// GET /api/v1/transactions/:id
+// GetTransactionByID godoc
+// @Summary      Obtener transacción por ID
+// @Description  Obtiene el detalle completo de una transacción incluyendo sus asientos contables relacionados (account_from, account_to, categoría)
+// @Tags         Transactions
+// @Produce      json
+// @Param        id   path      int                                       true  "ID de la transacción"
+// @Success      200  {object}  object{data=dtos.TransactionResponse}     "Detalle de la transacción"
+// @Failure      400  {object}  dtos.ErrorResponse                        "ID inválido"
+// @Failure      401  {object}  dtos.ErrorResponse                        "No autenticado"
+// @Failure      404  {object}  dtos.ErrorResponse                        "Transacción no encontrada"
+// @Security     BearerAuth
+// @Router       /transactions/{id} [get]
 func (h *TransactionHandler) GetTransactionByID(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
@@ -84,9 +110,19 @@ func (h *TransactionHandler) GetTransactionByID(c *gin.Context) {
 	})
 }
 
-// CreateTransaction creates a new transaction
-// POST /api/v1/transactions
-// This goes through the Accounting Engine!
+// CreateTransaction godoc
+// @Summary      Crear transacción
+// @Description  Crea una nueva transacción procesándola a través del Motor Contable de doble partida. Genera automáticamente los asientos de débito y crédito y actualiza los saldos de las cuentas involucradas. Tipos: INCOME (requiere category_id), EXPENSE (requiere category_id), TRANSFER (requiere account_to_id)
+// @Tags         Transactions
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dtos.CreateTransactionRequest                          true  "Datos de la transacción"
+// @Success      201   {object}  object{message=string,data=dtos.TransactionResponse}  "Transacción creada y contabilizada exitosamente"
+// @Failure      400   {object}  dtos.ErrorResponse                                    "Datos inválidos o regla de negocio violada"
+// @Failure      401   {object}  dtos.ErrorResponse                                    "No autenticado"
+// @Failure      500   {object}  dtos.ErrorResponse                                    "Error interno del servidor"
+// @Security     BearerAuth
+// @Router       /transactions [post]
 func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	var req dtos.CreateTransactionRequest
 
@@ -98,8 +134,11 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get userID from authentication context
-	userID := uint(1)
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		respondUnauthorized(c)
+		return
+	}
 
 	// This will process through the Accounting Engine
 	transaction, err := h.transactionService.Create(&req, userID)
@@ -117,8 +156,20 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	})
 }
 
-// UpdateTransaction updates an existing transaction
-// PUT /api/v1/transactions/:id
+// UpdateTransaction godoc
+// @Summary      Actualizar transacción
+// @Description  Actualiza los campos editables de una transacción existente (descripción, notas, fecha, estado de conciliación). El monto y las cuentas no pueden modificarse directamente; para ello, elimina la transacción y crea una nueva
+// @Tags         Transactions
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                          true  "ID de la transacción"
+// @Param        body  body      dtos.UpdateTransactionRequest  true  "Campos a actualizar"
+// @Success      200   {object}  dtos.SuccessResponse         "Transacción actualizada exitosamente"
+// @Failure      400   {object}  dtos.ErrorResponse           "ID o datos inválidos"
+// @Failure      401   {object}  dtos.ErrorResponse           "No autenticado"
+// @Failure      500   {object}  dtos.ErrorResponse           "Error interno del servidor"
+// @Security     BearerAuth
+// @Router       /transactions/{id} [put]
 func (h *TransactionHandler) UpdateTransaction(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
@@ -151,8 +202,18 @@ func (h *TransactionHandler) UpdateTransaction(c *gin.Context) {
 	})
 }
 
-// DeleteTransaction deletes a transaction (by reversing it)
-// DELETE /api/v1/transactions/:id
+// DeleteTransaction godoc
+// @Summary      Eliminar transacción (reversión contable)
+// @Description  Elimina una transacción creando asientos de reversión en el diario contable (DEBIT↔CREDIT invertidos). Nunca borra registros del diario; garantiza la integridad del historial contable. Los saldos de las cuentas se restauran automáticamente
+// @Tags         Transactions
+// @Produce      json
+// @Param        id   path      int                   true  "ID de la transacción a revertir"
+// @Success      200  {object}  dtos.SuccessResponse  "Transacción revertida exitosamente"
+// @Failure      400  {object}  dtos.ErrorResponse    "ID inválido"
+// @Failure      401  {object}  dtos.ErrorResponse    "No autenticado"
+// @Failure      500  {object}  dtos.ErrorResponse    "Error interno del servidor"
+// @Security     BearerAuth
+// @Router       /transactions/{id} [delete]
 func (h *TransactionHandler) DeleteTransaction(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
@@ -175,14 +236,4 @@ func (h *TransactionHandler) DeleteTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Transaction deleted successfully (reversed)",
 	})
-}
-
-// Helper function to parse int query params with default
-func parseIntParam(c *gin.Context, key string, defaultValue int) int {
-	if value := c.Query(key); value != "" {
-		if parsed, err := strconv.Atoi(value); err == nil {
-			return parsed
-		}
-	}
-	return defaultValue
 }

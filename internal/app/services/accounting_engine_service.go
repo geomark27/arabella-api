@@ -78,8 +78,10 @@ func (s *accountingEngineService) ProcessTransaction(tx *models.Transaction) err
 			return fmt.Errorf("failed to save journal entries: %w", err)
 		}
 
-		// Step 6: Update account balances
-		if err := s.updateAccountBalances(dbTx, entries); err != nil {
+		// Step 6: Update real account balances directly from the transaction.
+		// This avoids the CategoryID/AccountID ambiguity that exists in journal entries,
+		// where INCOME/EXPENSE entries use CategoryID as a virtual "AccountID".
+		if err := s.updateRealAccountBalances(dbTx, tx); err != nil {
 			return fmt.Errorf("failed to update account balances: %w", err)
 		}
 
@@ -218,48 +220,69 @@ func (s *accountingEngineService) validateBalance(entries []*models.JournalEntry
 	return nil
 }
 
-// updateAccountBalances updates the balances of affected accounts
-// For EXPENSE/INCOME: Only update the real account (not categories)
-// For TRANSFER: Update both accounts
-func (s *accountingEngineService) updateAccountBalances(dbTx *gorm.DB, entries []*models.JournalEntry) error {
-	accountUpdates := make(map[uint]decimal.Decimal)
-
-	for _, entry := range entries {
-		// Skip category entries (we only update real accounts)
-		// In a more complete implementation, categories would be in a separate table
-		// For now, we assume AccountID > 1000 means it's a category (convention)
-		// TODO: Improve this logic when category accounts are properly separated
-
-		amount := entry.Amount
-		if entry.DebitOrCredit == "CREDIT" {
-			amount = amount.Neg() // Credit decreases account balance
+// updateRealAccountBalances updates only real account balances based on transaction type.
+// It operates directly on the transaction object to avoid the CategoryID/AccountID ambiguity
+// that arises in journal entries, where INCOME/EXPENSE entries reference CategoryID as a
+// virtual account placeholder.
+//
+//   - EXPENSE:  AccountFrom balance decreases (money leaves the account)
+//   - INCOME:   AccountFrom balance increases (money arrives into the account)
+//   - TRANSFER: AccountFrom decreases, AccountTo increases
+func (s *accountingEngineService) updateRealAccountBalances(dbTx *gorm.DB, tx *models.Transaction) error {
+	switch tx.Type {
+	case "EXPENSE":
+		return s.applyBalanceChange(dbTx, tx.AccountFromID, tx.Amount.Neg())
+	case "INCOME":
+		return s.applyBalanceChange(dbTx, tx.AccountFromID, tx.Amount)
+	case "TRANSFER":
+		if tx.AccountToID == nil {
+			return fmt.Errorf("account_to_id is required for TRANSFER balance update")
 		}
-
-		if existing, ok := accountUpdates[entry.AccountID]; ok {
-			accountUpdates[entry.AccountID] = existing.Add(amount)
-		} else {
-			accountUpdates[entry.AccountID] = amount
+		if err := s.applyBalanceChange(dbTx, tx.AccountFromID, tx.Amount.Neg()); err != nil {
+			return err
 		}
+		return s.applyBalanceChange(dbTx, *tx.AccountToID, tx.Amount)
+	default:
+		return fmt.Errorf("unsupported transaction type for balance update: %s", tx.Type)
 	}
+}
 
-	// Apply updates to each account
-	for accountID, balanceChange := range accountUpdates {
-		var account models.Account
-		if err := dbTx.First(&account, accountID).Error; err != nil {
-			// If account not found, it might be a category - skip for now
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				continue
-			}
-			return fmt.Errorf("failed to find account %d: %w", accountID, err)
+// reverseRealAccountBalances applies the inverse balance changes to cancel a transaction.
+// Used by ReverseTransaction to undo the original account balance movements.
+//
+//   - EXPENSE reversal:  AccountFrom balance increases (money is returned)
+//   - INCOME reversal:   AccountFrom balance decreases (income is cancelled)
+//   - TRANSFER reversal: AccountFrom increases, AccountTo decreases
+func (s *accountingEngineService) reverseRealAccountBalances(dbTx *gorm.DB, tx *models.Transaction) error {
+	switch tx.Type {
+	case "EXPENSE":
+		return s.applyBalanceChange(dbTx, tx.AccountFromID, tx.Amount)
+	case "INCOME":
+		return s.applyBalanceChange(dbTx, tx.AccountFromID, tx.Amount.Neg())
+	case "TRANSFER":
+		if tx.AccountToID == nil {
+			return fmt.Errorf("account_to_id is required for TRANSFER reversal")
 		}
-
-		account.UpdateBalance(balanceChange)
-
-		if err := dbTx.Save(&account).Error; err != nil {
-			return fmt.Errorf("failed to update account %d balance: %w", accountID, err)
+		if err := s.applyBalanceChange(dbTx, tx.AccountFromID, tx.Amount); err != nil {
+			return err
 		}
+		return s.applyBalanceChange(dbTx, *tx.AccountToID, tx.Amount.Neg())
+	default:
+		return fmt.Errorf("unsupported transaction type for balance reversal: %s", tx.Type)
 	}
+}
 
+// applyBalanceChange fetches an account by ID and atomically applies a balance delta.
+// A positive change increases the balance; a negative change decreases it.
+func (s *accountingEngineService) applyBalanceChange(dbTx *gorm.DB, accountID uint, change decimal.Decimal) error {
+	var account models.Account
+	if err := dbTx.First(&account, accountID).Error; err != nil {
+		return fmt.Errorf("account %d not found: %w", accountID, err)
+	}
+	account.UpdateBalance(change)
+	if err := dbTx.Save(&account).Error; err != nil {
+		return fmt.Errorf("failed to update balance for account %d: %w", accountID, err)
+	}
 	return nil
 }
 
@@ -305,8 +328,9 @@ func (s *accountingEngineService) ReverseTransaction(transactionID uint) error {
 			return fmt.Errorf("failed to create reversing entries: %w", err)
 		}
 
-		// Update account balances (reverse the changes)
-		if err := s.updateAccountBalances(dbTx, reversingEntries); err != nil {
+		// Reverse the original account balance changes using the transaction directly.
+		// This guarantees only real accounts are touched (no CategoryID confusion).
+		if err := s.reverseRealAccountBalances(dbTx, tx); err != nil {
 			return fmt.Errorf("failed to update balances during reversal: %w", err)
 		}
 

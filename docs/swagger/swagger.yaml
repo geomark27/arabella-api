@@ -1,0 +1,1927 @@
+basePath: /api/v1
+definitions:
+  dtos.AccountBalanceDTO:
+    properties:
+      balance:
+        type: number
+      currency_code:
+        type: string
+      currency_symbol:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  dtos.AccountResponseDTO:
+    properties:
+      account_type:
+        type: string
+      balance:
+        description: Changed to decimal.Decimal to match model
+        type: number
+      created_at:
+        type: string
+      currency:
+        $ref: '#/definitions/dtos.CurrencySummary'
+      currency_id:
+        type: integer
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dtos.AccountSummary:
+    properties:
+      balance:
+        description: Can be string or decimal.Decimal depending on model version
+      currency:
+        $ref: '#/definitions/dtos.CurrencySummary'
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  dtos.BalanceVerificationResponse:
+    properties:
+      difference:
+        description: Should be 0 for balanced transactions
+        type: number
+      is_balanced:
+        type: boolean
+      message:
+        type: string
+      total_credits:
+        type: number
+      total_debits:
+        type: number
+      transaction_id:
+        type: integer
+    type: object
+  dtos.CategoryResponse:
+    properties:
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  dtos.CategorySummary:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  dtos.ChangePasswordDTO:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  dtos.CreateAccountDTO:
+    properties:
+      account_type:
+        type: string
+      balance:
+        type: number
+      currency_id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+    required:
+    - account_type
+    - currency_id
+    - name
+    type: object
+  dtos.CreateCategoryRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      type:
+        enum:
+        - INCOME
+        - EXPENSE
+        type: string
+    required:
+    - name
+    - type
+    type: object
+  dtos.CreateTransactionRequest:
+    properties:
+      account_from_id:
+        type: integer
+      account_to_id:
+        type: integer
+      amount:
+        type: number
+      category_id:
+        type: integer
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      exchange_rate:
+        type: number
+      notes:
+        maxLength: 1000
+        type: string
+      transaction_date:
+        description: ISO 8601 format
+        type: string
+      type:
+        enum:
+        - INCOME
+        - EXPENSE
+        - TRANSFER
+        type: string
+    required:
+    - account_from_id
+    - amount
+    - description
+    - transaction_date
+    - type
+    type: object
+  dtos.CreateUserDTO:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    type: object
+  dtos.CurrencyResponseDto:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      symbol:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dtos.CurrencySummary:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      symbol:
+        type: string
+    type: object
+  dtos.DashboardResponse:
+    properties:
+      account_balances:
+        description: Account Breakdown
+        items:
+          $ref: '#/definitions/dtos.AccountBalanceDTO'
+        type: array
+      as_of:
+        description: Metadata
+        type: string
+      average_monthly_expenses:
+        description: Last 3 months average
+        type: number
+      base_currency:
+        description: 'User''s base currency (default: USD)'
+        type: string
+      liquid_assets:
+        description: BANK + CASH only
+        type: number
+      monthly_expenses:
+        description: Total EXPENSE transactions this month
+        type: number
+      monthly_income:
+        description: Monthly Stats (current month)
+        type: number
+      monthly_net_cash_flow:
+        description: Income - Expenses
+        type: number
+      net_worth:
+        description: Assets - Liabilities
+        type: number
+      runway:
+        description: Runway Calculation (Critical feature from DOC.md)
+        type: number
+      runway_days:
+        description: Runway in days
+        type: integer
+      total_assets:
+        description: Financial Overview
+        type: number
+      total_liabilities:
+        description: Sum of all CREDIT_CARD accounts
+        type: number
+    type: object
+  dtos.ErrorResponse:
+    properties:
+      details:
+        example: additional error details
+        type: string
+      error:
+        example: error message
+        type: string
+    type: object
+  dtos.JournalEntryListResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/dtos.JournalEntryResponse'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dtos.JournalEntryResponse:
+    properties:
+      account:
+        allOf:
+        - $ref: '#/definitions/dtos.AccountSummary'
+        description: Relationships
+      account_id:
+        type: integer
+      amount:
+        type: number
+      created_at:
+        type: string
+      debit_or_credit:
+        description: '"DEBIT" or "CREDIT"'
+        type: string
+      description:
+        type: string
+      entry_date:
+        type: string
+      id:
+        type: integer
+      transaction_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  dtos.LoginDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dtos.LoginResponseDTO:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/dtos.UserResponse'
+    type: object
+  dtos.MonthlyStats:
+    properties:
+      expenses:
+        type: number
+      income:
+        type: number
+      month:
+        description: 1-12
+        type: integer
+      net_cash_flow:
+        description: Income - Expenses
+        type: number
+      transaction_count:
+        type: integer
+      year:
+        type: integer
+    type: object
+  dtos.RefreshTokenDTO:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dtos.RefreshTokenResponseDTO:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dtos.RegisterAuthDTO:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  dtos.RunwayCalculation:
+    properties:
+      available_funds:
+        description: LiquidAssets - ShortTermLiabilities
+        type: number
+      average_monthly_expenses:
+        description: Last 3 months
+        type: number
+      bank_accounts:
+        description: Breakdown by account type
+        items:
+          $ref: '#/definitions/dtos.AccountBalanceDTO'
+        type: array
+      base_currency:
+        type: string
+      calculation_date:
+        type: string
+      cash_accounts:
+        items:
+          $ref: '#/definitions/dtos.AccountBalanceDTO'
+        type: array
+      credit_card_accounts:
+        items:
+          $ref: '#/definitions/dtos.AccountBalanceDTO'
+        type: array
+      liquid_assets:
+        description: BANK + CASH
+        type: number
+      message:
+        type: string
+      runway_days:
+        type: integer
+      runway_months:
+        description: AvailableFunds / AvgExpenses
+        type: number
+      short_term_liabilities:
+        description: CREDIT_CARD balances
+        type: number
+      status:
+        description: Warning levels
+        type: string
+    type: object
+  dtos.SuccessResponse:
+    properties:
+      message:
+        example: operation completed successfully
+        type: string
+    type: object
+  dtos.TransactionListResponse:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+      transactions:
+        items:
+          $ref: '#/definitions/dtos.TransactionResponse'
+        type: array
+    type: object
+  dtos.TransactionResponse:
+    properties:
+      account_from:
+        allOf:
+        - $ref: '#/definitions/dtos.AccountSummary'
+        description: Relationships
+      account_to:
+        $ref: '#/definitions/dtos.AccountSummary'
+      amount:
+        type: number
+      amount_in_usd:
+        type: number
+      category:
+        $ref: '#/definitions/dtos.CategorySummary'
+      created_at:
+        type: string
+      description:
+        type: string
+      exchange_rate:
+        type: number
+      id:
+        type: integer
+      is_reconciled:
+        type: boolean
+      notes:
+        type: string
+      transaction_date:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  dtos.UpdateAccountDTO:
+    properties:
+      account_type:
+        type: string
+      balance:
+        description: Changed to *decimal.Decimal for optional updates
+        type: number
+      currency_id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+    type: object
+  dtos.UpdateCategoryRequest:
+    properties:
+      is_active:
+        type: boolean
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+    type: object
+  dtos.UpdateTransactionRequest:
+    properties:
+      amount:
+        type: number
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      is_reconciled:
+        type: boolean
+      notes:
+        maxLength: 1000
+        type: string
+      transaction_date:
+        description: ISO 8601 format
+        type: string
+    type: object
+  dtos.UpdateUserDTO:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+    type: object
+  dtos.UserResponse:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_name:
+        type: string
+    type: object
+  dtos.UserResponseDTO:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@arabella.app
+    name: Arabella Support
+  description: API REST para el sistema de gestión financiera personal Arabella. Implementa
+    contabilidad de doble partida, cálculo de Runway y soporte multi-moneda.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Arabella Financial OS API
+  version: 1.0.0
+paths:
+  /accounts:
+    get:
+      description: Obtiene todas las cuentas financieras del usuario autenticado (BANK,
+        CASH, CREDIT_CARD, SAVINGS, INVESTMENT)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de cuentas
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items:
+                  $ref: '#/definitions/dtos.AccountResponseDTO'
+                type: array
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar cuentas
+      tags:
+      - Accounts
+    post:
+      consumes:
+      - application/json
+      description: 'Crea una nueva cuenta financiera para el usuario autenticado.
+        El campo user_id se asigna automáticamente desde el JWT. Tipos válidos: BANK,
+        CASH, CREDIT_CARD, SAVINGS, INVESTMENT'
+      parameters:
+      - description: Datos de la nueva cuenta
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateAccountDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Cuenta creada exitosamente
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.AccountResponseDTO'
+              message:
+                type: string
+            type: object
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear cuenta
+      tags:
+      - Accounts
+  /accounts/{id}:
+    delete:
+      description: Realiza un borrado lógico (soft delete) de una cuenta financiera.
+        Los registros históricos se conservan
+      parameters:
+      - description: ID de la cuenta
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cuenta eliminada exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar cuenta
+      tags:
+      - Accounts
+    get:
+      description: Obtiene el detalle completo de una cuenta financiera por su ID,
+        incluyendo saldo y moneda
+      parameters:
+      - description: ID de la cuenta
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detalle de la cuenta
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.AccountResponseDTO'
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Cuenta no encontrada
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener cuenta por ID
+      tags:
+      - Accounts
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los datos de una cuenta financiera existente. Solo se
+        actualizan los campos enviados (PATCH semántico)
+      parameters:
+      - description: ID de la cuenta
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Campos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateAccountDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cuenta actualizada exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: ID o datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar cuenta
+      tags:
+      - Accounts
+  /auth/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Cambia la contraseña del usuario autenticado verificando la contraseña
+        actual
+      parameters:
+      - description: Contraseñas actual y nueva
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.ChangePasswordDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contraseña actualizada exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: Datos inválidos o contraseña actual incorrecta
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cambiar contraseña
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica al usuario con email y contraseña, devuelve tokens de
+        acceso y refresco JWT
+      parameters:
+      - description: Credenciales de acceso
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.LoginDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Autenticación exitosa
+          schema:
+            $ref: '#/definitions/dtos.LoginResponseDTO'
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Credenciales incorrectas
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Iniciar sesión
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Genera un nuevo par de tokens (acceso + refresco) a partir de un
+        refresh token válido
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RefreshTokenDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens renovados exitosamente
+          schema:
+            $ref: '#/definitions/dtos.RefreshTokenResponseDTO'
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Refresh token inválido o expirado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Refrescar tokens
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Crea una nueva cuenta de usuario y devuelve tokens de acceso JWT
+      parameters:
+      - description: Datos de registro
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RegisterAuthDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuario registrado exitosamente
+          schema:
+            $ref: '#/definitions/dtos.LoginResponseDTO'
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "409":
+          description: El email ya está registrado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Registrar nuevo usuario
+      tags:
+      - Auth
+  /categories:
+    get:
+      description: Obtiene todas las categorías del usuario autenticado. Se puede
+        filtrar por tipo (INCOME o EXPENSE)
+      parameters:
+      - description: Tipo de categoría (INCOME, EXPENSE)
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de categorías
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items:
+                  $ref: '#/definitions/dtos.CategoryResponse'
+                type: array
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar categorías
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      description: 'Crea una nueva categoría para clasificar transacciones del usuario
+        autenticado. Tipos válidos: INCOME (ingresos) o EXPENSE (gastos)'
+      parameters:
+      - description: Datos de la nueva categoría
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Categoría creada exitosamente
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.CategoryResponse'
+              message:
+                type: string
+            type: object
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear categoría
+      tags:
+      - Categories
+  /categories/{id}:
+    delete:
+      description: Realiza un borrado lógico (soft delete) de una categoría. Las transacciones
+        asociadas no se eliminan
+      parameters:
+      - description: ID de la categoría
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Categoría eliminada exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar categoría
+      tags:
+      - Categories
+    get:
+      description: Obtiene el detalle de una categoría específica por su ID
+      parameters:
+      - description: ID de la categoría
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detalle de la categoría
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.CategoryResponse'
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Categoría no encontrada
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener categoría por ID
+      tags:
+      - Categories
+    put:
+      consumes:
+      - application/json
+      description: Actualiza el nombre o el estado activo de una categoría existente.
+        Solo se modifican los campos enviados
+      parameters:
+      - description: ID de la categoría
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Campos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Categoría actualizada exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: ID o datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar categoría
+      tags:
+      - Categories
+  /currencies:
+    get:
+      description: Obtiene todas las monedas activas disponibles en el sistema (USD,
+        EUR, MXN, etc.). Este endpoint es público y no requiere autenticación
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de monedas activas
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items:
+                  $ref: '#/definitions/dtos.CurrencyResponseDto'
+                type: array
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Listar monedas disponibles
+      tags:
+      - Currencies
+  /currencies/{code}:
+    get:
+      description: 'Obtiene el detalle de una moneda específica usando su código ISO
+        4217 (ej: USD, EUR, MXN). Este endpoint es público y no requiere autenticación'
+      parameters:
+      - description: 'Código ISO 4217 de la moneda (ej: USD, EUR, MXN)'
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detalle de la moneda
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.CurrencyResponseDto'
+            type: object
+        "404":
+          description: Moneda no encontrada
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Obtener moneda por código ISO
+      tags:
+      - Currencies
+  /dashboard:
+    get:
+      description: 'Obtiene el dashboard completo del usuario autenticado: patrimonio
+        neto, activos, pasivos, flujo de caja mensual, y el cálculo de Runway (cuántos
+        meses puede sobrevivir sin ingresos basado en el promedio de gastos de los
+        últimos 3 meses)'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dashboard financiero completo
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.DashboardResponse'
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Resumen financiero del usuario
+      tags:
+      - Dashboard
+  /dashboard/monthly-stats:
+    get:
+      description: Obtiene el resumen de ingresos, gastos y flujo neto de caja para
+        un mes y año específicos del usuario autenticado
+      parameters:
+      - description: 'Mes (1-12, default: mes actual)'
+        in: query
+        name: month
+        type: integer
+      - description: 'Año (ej: 2026, default: año actual)'
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Estadísticas del mes solicitado
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.MonthlyStats'
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Estadísticas mensuales de ingresos y gastos
+      tags:
+      - Dashboard
+  /dashboard/runway:
+    get:
+      description: 'Calcula cuántos meses y días puede el usuario sostenerse financieramente
+        sin nuevos ingresos. Fórmula: (Activos líquidos - Pasivos a corto plazo) /
+        Promedio de gastos mensuales (últimos 3 meses). Estados: HEALTHY (≥6 meses),
+        WARNING (3-6 meses), CRITICAL (<3 meses)'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cálculo de Runway detallado con desglose por tipo de cuenta
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.RunwayCalculation'
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cálculo detallado de Runway
+      tags:
+      - Dashboard
+  /health:
+    get:
+      description: Verifica que el servicio está en ejecución y responde correctamente
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Servicio saludable
+          schema:
+            properties:
+              service:
+                type: string
+              status:
+                type: string
+              version:
+                type: string
+            type: object
+      summary: Health check
+      tags:
+      - Health
+  /health/ready:
+    get:
+      description: Verifica que el servicio está listo para recibir tráfico (base
+        de datos, dependencias externas)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Servicio listo
+          schema:
+            properties:
+              checks:
+                properties:
+                  cache:
+                    type: string
+                  database:
+                    type: string
+                type: object
+              status:
+                type: string
+            type: object
+      summary: Readiness check
+      tags:
+      - Health
+  /journal-entries:
+    get:
+      description: Obtiene una lista paginada de asientos del diario contable del
+        usuario autenticado. Los asientos son generados automáticamente por el Motor
+        Contable al crear o revertir transacciones; nunca se crean ni modifican manualmente.
+        Se pueden filtrar por transacción, cuenta o tipo (DEBIT/CREDIT)
+      parameters:
+      - description: Filtrar por ID de transacción
+        in: query
+        name: transaction_id
+        type: integer
+      - description: Filtrar por ID de cuenta
+        in: query
+        name: account_id
+        type: integer
+      - description: Filtrar por tipo de asiento (DEBIT, CREDIT)
+        in: query
+        name: debit_or_credit
+        type: string
+      - description: 'Número de página (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Elementos por página (default: 50, máx: 100)'
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista paginada de asientos contables
+          schema:
+            $ref: '#/definitions/dtos.JournalEntryListResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar asientos contables (pista de auditoría)
+      tags:
+      - Journal Entries
+  /journal-entries/transaction/{id}:
+    get:
+      description: Obtiene todos los asientos de débito y crédito generados para una
+        transacción específica. Cada transacción produce exactamente 2 asientos (uno
+        DEBIT y uno CREDIT) que deben sumar igual, garantizando el equilibrio de la
+        doble partida
+      parameters:
+      - description: ID de la transacción
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Asientos de la transacción
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items:
+                  $ref: '#/definitions/dtos.JournalEntryResponse'
+                type: array
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Asientos contables de una transacción
+      tags:
+      - Journal Entries
+  /journal-entries/verify/{id}:
+    get:
+      description: 'Verifica que la suma de todos los asientos DEBIT sea igual a la
+        suma de los asientos CREDIT para una transacción dada. Esto garantiza la regla
+        fundamental de la contabilidad de doble partida: ∑ Débitos = ∑ Créditos'
+      parameters:
+      - description: ID de la transacción a verificar
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resultado de la verificación con totales de débito y crédito
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.BalanceVerificationResponse'
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error al ejecutar la verificación
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Verificar equilibrio contable de una transacción
+      tags:
+      - Journal Entries
+  /system-values/account-classifications:
+    get:
+      description: 'Obtiene todas las clasificaciones contables de cuenta disponibles
+        en el sistema (ej: ASSET, LIABILITY, EQUITY). Endpoint público, no requiere
+        autenticación'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de clasificaciones de cuenta
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items: {}
+                type: array
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Obtener clasificaciones de cuenta
+      tags:
+      - System Values
+  /system-values/account-types:
+    get:
+      description: 'Obtiene todos los tipos de cuenta disponibles en el sistema: BANK
+        (banco), CASH (efectivo), CREDIT_CARD (tarjeta de crédito), SAVINGS (ahorro),
+        INVESTMENT (inversión). Endpoint público, no requiere autenticación'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de tipos de cuenta
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items: {}
+                type: array
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Obtener tipos de cuenta
+      tags:
+      - System Values
+  /system-values/catalog/{catalogType}:
+    get:
+      description: 'Obtiene todos los valores activos de un catálogo específico del
+        sistema. Los catálogos disponibles son: ACCOUNT_TYPE, ACCOUNT_CLASSIFICATION,
+        TRANSACTION_TYPE, CATEGORY_TYPE. Este endpoint es público y no requiere autenticación'
+      parameters:
+      - description: 'Tipo de catálogo (ej: ACCOUNT_TYPE, TRANSACTION_TYPE)'
+        in: path
+        name: catalogType
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de valores del catálogo
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items: {}
+                type: array
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Obtener valores por tipo de catálogo
+      tags:
+      - System Values
+  /system-values/category-types:
+    get:
+      description: 'Obtiene todos los tipos de categoría disponibles en el sistema:
+        INCOME (para clasificar ingresos) y EXPENSE (para clasificar gastos). Endpoint
+        público, no requiere autenticación'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de tipos de categoría
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items: {}
+                type: array
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Obtener tipos de categoría
+      tags:
+      - System Values
+  /system-values/transaction-types:
+    get:
+      description: 'Obtiene todos los tipos de transacción válidos en el sistema:
+        INCOME (ingreso, requiere category_id), EXPENSE (gasto, requiere category_id),
+        TRANSFER (transferencia entre cuentas, requiere account_to_id). Endpoint público,
+        no requiere autenticación'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de tipos de transacción
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items: {}
+                type: array
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Obtener tipos de transacción
+      tags:
+      - System Values
+  /transactions:
+    get:
+      description: Obtiene una lista paginada de transacciones del usuario autenticado
+        con filtros opcionales. Cada transacción pasa por el Motor Contable de doble
+        partida
+      parameters:
+      - description: Tipo de transacción (INCOME, EXPENSE, TRANSFER)
+        in: query
+        name: type
+        type: string
+      - description: Filtrar por ID de cuenta
+        in: query
+        name: account_id
+        type: integer
+      - description: Filtrar por ID de categoría
+        in: query
+        name: category_id
+        type: integer
+      - description: 'Número de página (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Elementos por página (default: 20, máx: 100)'
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de transacciones paginada
+          schema:
+            $ref: '#/definitions/dtos.TransactionListResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar transacciones
+      tags:
+      - Transactions
+    post:
+      consumes:
+      - application/json
+      description: 'Crea una nueva transacción procesándola a través del Motor Contable
+        de doble partida. Genera automáticamente los asientos de débito y crédito
+        y actualiza los saldos de las cuentas involucradas. Tipos: INCOME (requiere
+        category_id), EXPENSE (requiere category_id), TRANSFER (requiere account_to_id)'
+      parameters:
+      - description: Datos de la transacción
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Transacción creada y contabilizada exitosamente
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.TransactionResponse'
+              message:
+                type: string
+            type: object
+        "400":
+          description: Datos inválidos o regla de negocio violada
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear transacción
+      tags:
+      - Transactions
+  /transactions/{id}:
+    delete:
+      description: Elimina una transacción creando asientos de reversión en el diario
+        contable (DEBIT↔CREDIT invertidos). Nunca borra registros del diario; garantiza
+        la integridad del historial contable. Los saldos de las cuentas se restauran
+        automáticamente
+      parameters:
+      - description: ID de la transacción a revertir
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transacción revertida exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar transacción (reversión contable)
+      tags:
+      - Transactions
+    get:
+      description: Obtiene el detalle completo de una transacción incluyendo sus asientos
+        contables relacionados (account_from, account_to, categoría)
+      parameters:
+      - description: ID de la transacción
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detalle de la transacción
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.TransactionResponse'
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Transacción no encontrada
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener transacción por ID
+      tags:
+      - Transactions
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los campos editables de una transacción existente (descripción,
+        notas, fecha, estado de conciliación). El monto y las cuentas no pueden modificarse
+        directamente; para ello, elimina la transacción y crea una nueva
+      parameters:
+      - description: ID de la transacción
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Campos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transacción actualizada exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: ID o datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar transacción
+      tags:
+      - Transactions
+  /users:
+    get:
+      description: Obtiene la lista de todos los usuarios registrados en el sistema.
+        Endpoint de administración
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de usuarios
+          schema:
+            properties:
+              count:
+                type: integer
+              data:
+                items:
+                  $ref: '#/definitions/dtos.UserResponseDTO'
+                type: array
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar usuarios
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo usuario en el sistema. Para el registro con autenticación
+        JWT usa POST /auth/register en su lugar
+      parameters:
+      - description: Datos del nuevo usuario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateUserDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuario creado exitosamente
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.UserResponseDTO'
+              message:
+                type: string
+            type: object
+        "400":
+          description: Datos inválidos o email duplicado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear usuario
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      description: Realiza un borrado lógico (soft delete) del usuario. Sus cuentas,
+        transacciones y asientos contables se conservan en la base de datos
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario eliminado exitosamente
+          schema:
+            $ref: '#/definitions/dtos.SuccessResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar usuario
+      tags:
+      - Users
+    get:
+      description: Obtiene el detalle de un usuario específico por su ID. No devuelve
+        datos sensibles como el hash de contraseña
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detalle del usuario
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.UserResponseDTO'
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener usuario por ID
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los datos de un usuario existente. Solo se modifican
+        los campos enviados en el body (PATCH semántico)
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Campos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario actualizado exitosamente
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/dtos.UserResponseDTO'
+              message:
+                type: string
+            type: object
+        "400":
+          description: ID o datos inválidos
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar usuario
+      tags:
+      - Users
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'Escribe "Bearer" seguido de un espacio y tu JWT de acceso. Ejemplo:
+      "Bearer eyJhbGci..."'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

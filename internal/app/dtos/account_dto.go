@@ -21,17 +21,17 @@ type AccountResponseDTO struct {
 	Name        string           `json:"name"`
 	AccountType string           `json:"account_type"`
 	CurrencyID  *uint            `json:"currency_id"`
-	Currency    *models.Currency `json:"currency,omitempty"`
+	Currency    *CurrencySummary `json:"currency,omitempty"`
 	Balance     decimal.Decimal  `json:"balance"` // Changed to decimal.Decimal to match model
 	IsActive    bool             `json:"is_active"`
 }
 
 type CreateAccountDTO struct {
-	UserID      uint            `json:"user_id" binding:"required"`
+	UserID      uint            `json:"-"` // Set from JWT context, not from request body
 	Name        string          `json:"name" binding:"required"`
 	AccountType string          `json:"account_type" binding:"required"`
 	CurrencyID  *uint           `json:"currency_id" binding:"required"`
-	Balance     decimal.Decimal `json:"balance"` // Changed to decimal.Decimal
+	Balance     decimal.Decimal `json:"balance"`
 	IsActive    *bool           `json:"is_active"`
 }
 
@@ -44,17 +44,24 @@ type UpdateAccountDTO struct {
 }
 
 func ToAccountResponse(account *models.Account) *AccountResponseDTO {
-	return &AccountResponseDTO{
+	dto := &AccountResponseDTO{
 		ID:          account.ID,
 		CreatedAt:   account.CreatedAt,
 		UpdatedAt:   account.UpdatedAt,
 		Name:        account.Name,
 		AccountType: account.AccountType,
 		CurrencyID:  account.CurrencyID,
-		Currency:    account.Currency,
 		Balance:     account.Balance,
 		IsActive:    account.IsActive,
 	}
+	if account.Currency != nil {
+		dto.Currency = &CurrencySummary{
+			ID:     account.Currency.ID,
+			Code:   account.Currency.Code,
+			Symbol: account.Currency.Symbol,
+		}
+	}
+	return dto
 }
 
 func ToAccountResponseList(accounts []models.Account) []AccountResponseDTO {
