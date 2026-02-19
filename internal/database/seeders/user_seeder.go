@@ -42,10 +42,7 @@ func (s *UserSeeder) Run(db *gorm.DB) error {
 			log.Printf("❌ Error creating demo user: %v", err)
 			return err
 		}
-
-		log.Println("✅ Demo User created successfully")
-		log.Println("   📧 Email: demo@arabella.app")
-		log.Println("   🔑 Password: demo123")
+		
 	} else if result.Error != nil {
 		log.Printf("❌ Error checking demo user: %v", result.Error)
 		return result.Error
