@@ -3,6 +3,7 @@ package repositories
 import (
 	"arabella-api/internal/app/models"
 	"errors"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -48,11 +49,12 @@ func (r *currencyRepositoryImpl) FindByID(id uint) (*models.Currency, error) {
 	return &currency, nil
 }
 
-// FindByCode finds a currency by its code (e.g., "USD", "EUR")
+// FindByCode finds a currency by its ISO code (e.g., "USD", "usd", "Usd").
+// The lookup is case-insensitive: the code is normalized to uppercase before querying.
 func (r *currencyRepositoryImpl) FindByCode(code string) (*models.Currency, error) {
 	var currency models.Currency
 
-	err := r.db.Where("code = ?", code).First(&currency).Error
+	err := r.db.Where("code = ?", strings.ToUpper(strings.TrimSpace(code))).First(&currency).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("currency not found")

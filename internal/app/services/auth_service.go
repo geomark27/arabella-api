@@ -48,11 +48,11 @@ func (s *AuthService) Register(dto *dtos.RegisterAuthDTO) (*dtos.LoginResponseDT
 
 	// Create user
 	user := &models.User{
+		UserName:     dto.UserName,
 		Email:        dto.Email,
 		PasswordHash: string(hashedPassword),
 		FirstName:    dto.FirstName,
 		LastName:     dto.LastName,
-		UserName:     dto.Email, // Use email as username by default
 		IsActive:     true,
 	}
 
@@ -89,10 +89,10 @@ func (s *AuthService) Login(dto *dtos.LoginDTO) (*dtos.LoginResponseDTO, error) 
 	// Find user by email
 	user, err := s.userRepo.FindByEmail(dto.Email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrInvalidCredentials
-		}
 		return nil, err
+	}
+	if user == nil {
+		return nil, ErrInvalidCredentials
 	}
 
 	// Check if user is active

@@ -31,15 +31,18 @@ func (m *AuthMiddleware) RequireAuth() gin.HandlerFunc {
 			return
 		}
 
-		// Check Bearer token format
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		// Extract token: accept both "Bearer <token>" and raw "<token>"
+		var tokenString string
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+			tokenString = parts[1]
+		} else if len(parts) == 1 {
+			tokenString = parts[0]
+		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
 			c.Abort()
 			return
 		}
-
-		tokenString := parts[1]
 
 		// Validate token
 		claims, err := m.jwtService.ValidateToken(tokenString)
@@ -71,13 +74,16 @@ func (m *AuthMiddleware) OptionalAuth() gin.HandlerFunc {
 			return
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		var tokenString string
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+			tokenString = parts[1]
+		} else if len(parts) == 1 {
+			tokenString = parts[0]
+		} else {
 			c.Next()
 			return
 		}
-
-		tokenString := parts[1]
 
 		claims, err := m.jwtService.ValidateToken(tokenString)
 		if err == nil {

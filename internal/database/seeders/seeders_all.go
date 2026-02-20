@@ -13,6 +13,7 @@ type Seeder interface {
 // Seeders will run in the order they are defined
 var AllSeeders = []Seeder{
 	&SystemValueSeeder{}, // Run first - provides catalogs
-	&UserSeeder{},        // Run second - creates users
+	&CurrencySeeder{},    // Run second - provides currencies
+	&UserSeeder{},        // Run third - creates users
 	// Add more seeders here as needed
 }

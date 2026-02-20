@@ -10,47 +10,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// swaggerUI5HTML es la plantilla HTML que carga Swagger UI 5.x desde CDN.
-// Esta versión incluye el toggle de dark/light mode nativo (ícono 💡 arriba a la derecha).
-// El spec se carga desde /swagger/doc.json generado por swag init.
-const swaggerUI5HTML = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arabella Financial OS — API Docs</title>
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
-  <style>
-    /* Ocultar el topbar azul oscuro por defecto de StandaloneLayout */
-    .swagger-ui .topbar { display: none; }
-  </style>
-</head>
-<body>
-  <div id="swagger-ui"></div>
-
-  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
-  <script>
-    window.onload = function () {
-      SwaggerUIBundle({
-        url: "/swagger/doc.json",
-        dom_id: "#swagger-ui",
-        deepLinking: true,
-        persistAuthorization: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout"
-      });
-    };
-  </script>
-</body>
-</html>`
-
 // registerRoutes registers all application routes
 func registerRoutes(
 	router *gin.Engine,
@@ -66,18 +25,11 @@ func registerRoutes(
 	journalEntryHandler *handlers.JournalEntryHandler,
 	dashboardHandler *handlers.DashboardHandler,
 ) {
-	// ------------------------------------------------------------------
-	// Swagger UI clásico  →  /swagger/index.html  (servido por swaggo)
-	// Swagger UI 5.x CDN  →  /docs               (con dark mode nativo)
-	// ------------------------------------------------------------------
+	// Swagger UI → /swagger/index.html  (swaggo por defecto)
+	// /docs      → redirect conveniente a /swagger/index.html
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/docs", func(c *gin.Context) {
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, swaggerUI5HTML)
-	})
-	// Redirección conveniente: /swagger → /docs
-	router.GET("/swagger", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/docs")
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
 	})
 
 	// Root route
@@ -88,7 +40,7 @@ func registerRoutes(
 			"version":     "v1.0.0 - Phase 1",
 			"description": "Personal Financial Management System with Double-Entry Bookkeeping",
 			"endpoints": gin.H{
-				"docs":            "/docs",
+				"docs":            "/swagger/index.html",
 				"health":          "/api/v1/health",
 				"auth":            "/api/v1/auth",
 				"dashboard":       "/api/v1/dashboard",

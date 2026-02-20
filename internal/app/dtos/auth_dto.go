@@ -1,6 +1,7 @@
 package dtos
 
 type RegisterAuthDTO struct {
+	UserName  string `json:"user_name" binding:"required"`
 	Email     string `json:"email" binding:"required,email"`
 	Password  string `json:"password" binding:"required,min=8"`
 	FirstName string `json:"first_name" binding:"required"`
@@ -20,6 +21,7 @@ type LoginResponseDTO struct {
 
 type UserResponse struct {
 	ID        uint   `json:"id"`
+	UserName  string `json:"user_name"`
 	Email     string `json:"email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`

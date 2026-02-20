@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"arabella-api/internal/app/dtos"
 	"arabella-api/internal/app/services"
 	"net/http"
 
@@ -21,12 +22,12 @@ func NewSystemValueHandler(systemValueService services.SystemValueService) *Syst
 
 // GetByCatalogType godoc
 // @Summary      Obtener valores por tipo de catálogo
-// @Description  Obtiene todos los valores activos de un catálogo específico del sistema. Los catálogos disponibles son: ACCOUNT_TYPE, ACCOUNT_CLASSIFICATION, TRANSACTION_TYPE, CATEGORY_TYPE. Este endpoint es público y no requiere autenticación
+// @Description  Obtiene todos los valores activos de un catálogo específico del sistema. Catálogos disponibles: ACCOUNT_TYPE, ACCOUNT_CLASSIFICATION, TRANSACTION_TYPE, CATEGORY_TYPE, JOURNAL_ENTRY_TYPE. Endpoint público, no requiere autenticación
 // @Tags         System Values
 // @Produce      json
 // @Param        catalogType  path      string  true  "Tipo de catálogo (ej: ACCOUNT_TYPE, TRANSACTION_TYPE)"
-// @Success      200          {object}  object{data=[]interface{},count=int}  "Lista de valores del catálogo"
-// @Failure      500          {object}  dtos.ErrorResponse                    "Error interno del servidor"
+// @Success      200          {object}  dtos.SystemValueListResponseDTO  "Lista de valores del catálogo"
+// @Failure      500          {object}  dtos.ErrorResponse               "Error interno del servidor"
 // @Router       /system-values/catalog/{catalogType} [get]
 func (h *SystemValueHandler) GetByCatalogType(c *gin.Context) {
 	catalogType := c.Param("catalogType")
@@ -40,19 +41,19 @@ func (h *SystemValueHandler) GetByCatalogType(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":  values,
-		"count": len(values),
+	c.JSON(http.StatusOK, dtos.SystemValueListResponseDTO{
+		Data:  values,
+		Count: len(values),
 	})
 }
 
 // GetAccountTypes godoc
 // @Summary      Obtener tipos de cuenta
-// @Description  Obtiene todos los tipos de cuenta disponibles en el sistema: BANK (banco), CASH (efectivo), CREDIT_CARD (tarjeta de crédito), SAVINGS (ahorro), INVESTMENT (inversión). Endpoint público, no requiere autenticación
+// @Description  Obtiene todos los tipos de cuenta disponibles: BANK (banco), CASH (efectivo), CREDIT_CARD (tarjeta de crédito), SAVINGS (ahorro), INVESTMENT (inversión). Endpoint público, no requiere autenticación
 // @Tags         System Values
 // @Produce      json
-// @Success      200  {object}  object{data=[]interface{},count=int}  "Lista de tipos de cuenta"
-// @Failure      500  {object}  dtos.ErrorResponse                    "Error interno del servidor"
+// @Success      200  {object}  dtos.SystemValueListResponseDTO  "Lista de tipos de cuenta"
+// @Failure      500  {object}  dtos.ErrorResponse               "Error interno del servidor"
 // @Router       /system-values/account-types [get]
 func (h *SystemValueHandler) GetAccountTypes(c *gin.Context) {
 	values, err := h.systemValueService.GetAccountTypes()
@@ -64,19 +65,19 @@ func (h *SystemValueHandler) GetAccountTypes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":  values,
-		"count": len(values),
+	c.JSON(http.StatusOK, dtos.SystemValueListResponseDTO{
+		Data:  values,
+		Count: len(values),
 	})
 }
 
 // GetAccountClassifications godoc
 // @Summary      Obtener clasificaciones de cuenta
-// @Description  Obtiene todas las clasificaciones contables de cuenta disponibles en el sistema (ej: ASSET, LIABILITY, EQUITY). Endpoint público, no requiere autenticación
+// @Description  Obtiene todas las clasificaciones contables disponibles: ASSET (activo), LIABILITY (pasivo), EQUITY (patrimonio), INCOME (ingreso), EXPENSE (gasto). Endpoint público, no requiere autenticación
 // @Tags         System Values
 // @Produce      json
-// @Success      200  {object}  object{data=[]interface{},count=int}  "Lista de clasificaciones de cuenta"
-// @Failure      500  {object}  dtos.ErrorResponse                    "Error interno del servidor"
+// @Success      200  {object}  dtos.SystemValueListResponseDTO  "Lista de clasificaciones de cuenta"
+// @Failure      500  {object}  dtos.ErrorResponse               "Error interno del servidor"
 // @Router       /system-values/account-classifications [get]
 func (h *SystemValueHandler) GetAccountClassifications(c *gin.Context) {
 	values, err := h.systemValueService.GetAccountClassifications()
@@ -88,19 +89,19 @@ func (h *SystemValueHandler) GetAccountClassifications(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":  values,
-		"count": len(values),
+	c.JSON(http.StatusOK, dtos.SystemValueListResponseDTO{
+		Data:  values,
+		Count: len(values),
 	})
 }
 
 // GetTransactionTypes godoc
 // @Summary      Obtener tipos de transacción
-// @Description  Obtiene todos los tipos de transacción válidos en el sistema: INCOME (ingreso, requiere category_id), EXPENSE (gasto, requiere category_id), TRANSFER (transferencia entre cuentas, requiere account_to_id). Endpoint público, no requiere autenticación
+// @Description  Obtiene todos los tipos de transacción válidos: INCOME (requiere category_id), EXPENSE (requiere category_id), TRANSFER (requiere account_to_id). Endpoint público, no requiere autenticación
 // @Tags         System Values
 // @Produce      json
-// @Success      200  {object}  object{data=[]interface{},count=int}  "Lista de tipos de transacción"
-// @Failure      500  {object}  dtos.ErrorResponse                    "Error interno del servidor"
+// @Success      200  {object}  dtos.SystemValueListResponseDTO  "Lista de tipos de transacción"
+// @Failure      500  {object}  dtos.ErrorResponse               "Error interno del servidor"
 // @Router       /system-values/transaction-types [get]
 func (h *SystemValueHandler) GetTransactionTypes(c *gin.Context) {
 	values, err := h.systemValueService.GetTransactionTypes()
@@ -112,19 +113,19 @@ func (h *SystemValueHandler) GetTransactionTypes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":  values,
-		"count": len(values),
+	c.JSON(http.StatusOK, dtos.SystemValueListResponseDTO{
+		Data:  values,
+		Count: len(values),
 	})
 }
 
 // GetCategoryTypes godoc
 // @Summary      Obtener tipos de categoría
-// @Description  Obtiene todos los tipos de categoría disponibles en el sistema: INCOME (para clasificar ingresos) y EXPENSE (para clasificar gastos). Endpoint público, no requiere autenticación
+// @Description  Obtiene todos los tipos de categoría disponibles: INCOME (para ingresos) y EXPENSE (para gastos). Endpoint público, no requiere autenticación
 // @Tags         System Values
 // @Produce      json
-// @Success      200  {object}  object{data=[]interface{},count=int}  "Lista de tipos de categoría"
-// @Failure      500  {object}  dtos.ErrorResponse                    "Error interno del servidor"
+// @Success      200  {object}  dtos.SystemValueListResponseDTO  "Lista de tipos de categoría"
+// @Failure      500  {object}  dtos.ErrorResponse               "Error interno del servidor"
 // @Router       /system-values/category-types [get]
 func (h *SystemValueHandler) GetCategoryTypes(c *gin.Context) {
 	values, err := h.systemValueService.GetCategoryTypes()
@@ -136,8 +137,8 @@ func (h *SystemValueHandler) GetCategoryTypes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":  values,
-		"count": len(values),
+	c.JSON(http.StatusOK, dtos.SystemValueListResponseDTO{
+		Data:  values,
+		Count: len(values),
 	})
 }

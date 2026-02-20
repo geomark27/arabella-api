@@ -5,7 +5,9 @@ import (
 	"arabella-api/internal/app/models"
 	"arabella-api/internal/app/repositories"
 	"errors"
+	"fmt"
 
+	"github.com/jinzhu/copier"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,23 +36,23 @@ func NewUserService(userRepo repositories.UserRepository) UserService {
 
 // CreateUser creates a new user
 func (s *userServiceImpl) CreateUser(dto *dtos.CreateUserDTO) (*models.User, error) {
-	// Check if user with email already exists
-	existingUser, _ := s.userRepo.FindByEmail(dto.Email)
+
+	existingUser, err := s.userRepo.FindByEmail(dto.Email)
+	if err != nil {
+		return nil, err
+	}
 	if existingUser != nil {
 		return nil, errors.New("user with this email already exists")
 	}
 
-	// Create default password hash (should be changed by user)
-	// In production, this would come from the DTO
-	defaultPassword := "changeme123"
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create user model
 	user := &models.User{
-		UserName:     dto.Email, // Use email as username by default
+		UserName:     dto.UserName,
 		Email:        dto.Email,
 		FirstName:    dto.FirstName,
 		LastName:     dto.LastName,
@@ -83,29 +85,28 @@ func (s *userServiceImpl) GetAllUsers() ([]*models.User, error) {
 
 // UpdateUser updates a user
 func (s *userServiceImpl) UpdateUser(id uint, dto *dtos.UpdateUserDTO) (*models.User, error) {
-	// Find existing user
+	// 1. Find existing user
 	user, err := s.userRepo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	// Update fields if provided
-	if dto.FirstName != nil {
-		user.FirstName = *dto.FirstName
-	}
-	if dto.LastName != nil {
-		user.LastName = *dto.LastName
-	}
-	if dto.Email != nil {
-		// Check if new email is already in use by another user
+	// 2. Validate email uniqueness before applying changes (business rule, handled separately)
+	if dto.Email != nil && *dto.Email != user.Email {
 		existingUser, _ := s.userRepo.FindByEmail(*dto.Email)
 		if existingUser != nil && existingUser.ID != id {
 			return nil, errors.New("email already in use by another user")
 		}
-		user.Email = *dto.Email
 	}
 
-	// Save changes
+	// 3. Copy only the non-nil fields from DTO onto the model.
+	//    IgnoreEmpty: true skips nil pointers and zero values, so existing
+	//    model fields are never overwritten by absent DTO fields.
+	if err := copier.CopyWithOption(user, dto, copier.Option{IgnoreEmpty: true}); err != nil {
+		return nil, fmt.Errorf("failed to apply updates: %w", err)
+	}
+
+	// 4. Save changes
 	if err := s.userRepo.Update(user); err != nil {
 		return nil, err
 	}

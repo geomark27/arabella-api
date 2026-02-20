@@ -54,6 +54,11 @@ func main() {
 
 	// Mensaje de inicio
 	log.Printf("🚀 Servidor %s iniciado en http://localhost:%s", "arabella-api", cfg.Port)
+	log.Printf("📚 Documentación API: http://localhost:%s/swagger/index.html", cfg.Port)
+	log.Printf("❤️  Health check:      http://localhost:%s/api/v1/health", cfg.Port)
+	log.Printf("📊 Dashboard:         http://localhost:%s/api/v1/dashboard", cfg.Port)
+	log.Printf("🔐 Auth:              http://localhost:%s/api/v1/auth/login", cfg.Port)
+	log.Printf("🌍 Entorno:           %s", cfg.Environment)
 	log.Printf("✨ Proyecto generado con Loom")
 
 	// Iniciar servidor

@@ -1,19 +1,19 @@
 package services
 
 import (
-	"arabella-api/internal/app/models"
+	"arabella-api/internal/app/dtos"
 	"arabella-api/internal/app/repositories"
 	"fmt"
 )
 
 // SystemValueService handles system catalog values
 type SystemValueService interface {
-	GetByCatalogType(catalogType string) ([]*models.SystemValue, error)
-	GetAccountTypes() ([]*models.SystemValue, error)
-	GetAccountClassifications() ([]*models.SystemValue, error)
-	GetTransactionTypes() ([]*models.SystemValue, error)
-	GetCategoryTypes() ([]*models.SystemValue, error)
-	GetJournalEntryTypes() ([]*models.SystemValue, error)
+	GetByCatalogType(catalogType string) ([]dtos.SystemValueResponseDTO, error)
+	GetAccountTypes() ([]dtos.SystemValueResponseDTO, error)
+	GetAccountClassifications() ([]dtos.SystemValueResponseDTO, error)
+	GetTransactionTypes() ([]dtos.SystemValueResponseDTO, error)
+	GetCategoryTypes() ([]dtos.SystemValueResponseDTO, error)
+	GetJournalEntryTypes() ([]dtos.SystemValueResponseDTO, error)
 	ValidateValue(catalogType, value string) error
 }
 
@@ -29,33 +29,57 @@ func NewSystemValueService(systemValueRepo repositories.SystemValueRepository) S
 }
 
 // GetByCatalogType retrieves all system values for a catalog type
-func (s *systemValueService) GetByCatalogType(catalogType string) ([]*models.SystemValue, error) {
-	return s.systemValueRepo.FindByCatalogType(catalogType)
+func (s *systemValueService) GetByCatalogType(catalogType string) ([]dtos.SystemValueResponseDTO, error) {
+	values, err := s.systemValueRepo.FindByCatalogType(catalogType)
+	if err != nil {
+		return nil, err
+	}
+	return dtos.ToSystemValueResponseList(values), nil
 }
 
 // GetAccountTypes retrieves all account types
-func (s *systemValueService) GetAccountTypes() ([]*models.SystemValue, error) {
-	return s.systemValueRepo.FindByCatalogType("ACCOUNT_TYPE")
+func (s *systemValueService) GetAccountTypes() ([]dtos.SystemValueResponseDTO, error) {
+	values, err := s.systemValueRepo.FindByCatalogType("ACCOUNT_TYPE")
+	if err != nil {
+		return nil, err
+	}
+	return dtos.ToSystemValueResponseList(values), nil
 }
 
 // GetAccountClassifications retrieves all account classifications
-func (s *systemValueService) GetAccountClassifications() ([]*models.SystemValue, error) {
-	return s.systemValueRepo.FindByCatalogType("ACCOUNT_CLASSIFICATION")
+func (s *systemValueService) GetAccountClassifications() ([]dtos.SystemValueResponseDTO, error) {
+	values, err := s.systemValueRepo.FindByCatalogType("ACCOUNT_CLASSIFICATION")
+	if err != nil {
+		return nil, err
+	}
+	return dtos.ToSystemValueResponseList(values), nil
 }
 
 // GetTransactionTypes retrieves all transaction types
-func (s *systemValueService) GetTransactionTypes() ([]*models.SystemValue, error) {
-	return s.systemValueRepo.FindByCatalogType("TRANSACTION_TYPE")
+func (s *systemValueService) GetTransactionTypes() ([]dtos.SystemValueResponseDTO, error) {
+	values, err := s.systemValueRepo.FindByCatalogType("TRANSACTION_TYPE")
+	if err != nil {
+		return nil, err
+	}
+	return dtos.ToSystemValueResponseList(values), nil
 }
 
 // GetCategoryTypes retrieves all category types
-func (s *systemValueService) GetCategoryTypes() ([]*models.SystemValue, error) {
-	return s.systemValueRepo.FindByCatalogType("CATEGORY_TYPE")
+func (s *systemValueService) GetCategoryTypes() ([]dtos.SystemValueResponseDTO, error) {
+	values, err := s.systemValueRepo.FindByCatalogType("CATEGORY_TYPE")
+	if err != nil {
+		return nil, err
+	}
+	return dtos.ToSystemValueResponseList(values), nil
 }
 
 // GetJournalEntryTypes retrieves all journal entry types
-func (s *systemValueService) GetJournalEntryTypes() ([]*models.SystemValue, error) {
-	return s.systemValueRepo.FindByCatalogType("JOURNAL_ENTRY_TYPE")
+func (s *systemValueService) GetJournalEntryTypes() ([]dtos.SystemValueResponseDTO, error) {
+	values, err := s.systemValueRepo.FindByCatalogType("JOURNAL_ENTRY_TYPE")
+	if err != nil {
+		return nil, err
+	}
+	return dtos.ToSystemValueResponseList(values), nil
 }
 
 // ValidateValue checks if a value exists and is active for a given catalog type

@@ -38,6 +38,9 @@ help: ## Muestra esta ayuda
 	@echo "  🧪 Testing:"
 	@echo "    test | test-coverage | fmt | vet | lint"
 	@echo ""
+	@echo "  📝 Swagger:"
+	@echo "    swagger - Regenera docs (correr tras cambiar DTOs o anotaciones)"
+	@echo ""
 	@echo "  📦 Git ($(BRANCH)):"
 	@echo "    push m='msg' | pull | status | sync m='msg'"
 	@echo ""
@@ -120,10 +123,17 @@ fresh: ## Reset completo (clean DB + migrate + seed)
 	fi
 	@echo "✅ Database fresh and seeded!"
 
+swagger: ## Regenera la documentación Swagger (correr después de cambiar DTOs o anotaciones)
+	@echo "📝 Generando documentación Swagger..."
+	@swag init -g cmd/arabella-api/main.go -o docs/swagger
+	@echo "✅ Docs regenerados en docs/swagger/"
+
 install-tools: ## Instala herramientas de desarrollo
 	@echo "🛠️  Instalando herramientas de desarrollo..."
 	@go install github.com/cosmtrek/air@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install github.com/swaggo/swag/cmd/swag@latest
+	@echo "✅ Herramientas instaladas: air, golangci-lint, swag"
 
 # ============================================
 # COMANDOS DOCKER DESARROLLO (solo PostgreSQL)

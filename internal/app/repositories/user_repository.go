@@ -41,7 +41,7 @@ func (r *userRepositoryImpl) FindByID(id uint) (*models.User, error) {
 	err := r.db.First(&user, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, errors.New("User not found")
 		}
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (r *userRepositoryImpl) FindByEmail(email string) (*models.User, error) {
 	err := r.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, nil
 		}
 		return nil, err
 	}

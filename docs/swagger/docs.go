@@ -1279,7 +1279,7 @@ const docTemplate = `{
         },
         "/system-values/account-classifications": {
             "get": {
-                "description": "Obtiene todas las clasificaciones contables de cuenta disponibles en el sistema (ej: ASSET, LIABILITY, EQUITY). Endpoint público, no requiere autenticación",
+                "description": "Obtiene todas las clasificaciones contables disponibles: ASSET (activo), LIABILITY (pasivo), EQUITY (patrimonio), INCOME (ingreso), EXPENSE (gasto). Endpoint público, no requiere autenticación",
                 "produces": [
                     "application/json"
                 ],
@@ -1291,16 +1291,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Lista de clasificaciones de cuenta",
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "count": {
-                                    "type": "integer"
-                                },
-                                "data": {
-                                    "type": "array",
-                                    "items": {}
-                                }
-                            }
+                            "$ref": "#/definitions/dtos.SystemValueListResponseDTO"
                         }
                     },
                     "500": {
@@ -1314,7 +1305,7 @@ const docTemplate = `{
         },
         "/system-values/account-types": {
             "get": {
-                "description": "Obtiene todos los tipos de cuenta disponibles en el sistema: BANK (banco), CASH (efectivo), CREDIT_CARD (tarjeta de crédito), SAVINGS (ahorro), INVESTMENT (inversión). Endpoint público, no requiere autenticación",
+                "description": "Obtiene todos los tipos de cuenta disponibles: BANK (banco), CASH (efectivo), CREDIT_CARD (tarjeta de crédito), SAVINGS (ahorro), INVESTMENT (inversión). Endpoint público, no requiere autenticación",
                 "produces": [
                     "application/json"
                 ],
@@ -1326,16 +1317,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Lista de tipos de cuenta",
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "count": {
-                                    "type": "integer"
-                                },
-                                "data": {
-                                    "type": "array",
-                                    "items": {}
-                                }
-                            }
+                            "$ref": "#/definitions/dtos.SystemValueListResponseDTO"
                         }
                     },
                     "500": {
@@ -1349,7 +1331,7 @@ const docTemplate = `{
         },
         "/system-values/catalog/{catalogType}": {
             "get": {
-                "description": "Obtiene todos los valores activos de un catálogo específico del sistema. Los catálogos disponibles son: ACCOUNT_TYPE, ACCOUNT_CLASSIFICATION, TRANSACTION_TYPE, CATEGORY_TYPE. Este endpoint es público y no requiere autenticación",
+                "description": "Obtiene todos los valores activos de un catálogo específico del sistema. Catálogos disponibles: ACCOUNT_TYPE, ACCOUNT_CLASSIFICATION, TRANSACTION_TYPE, CATEGORY_TYPE, JOURNAL_ENTRY_TYPE. Endpoint público, no requiere autenticación",
                 "produces": [
                     "application/json"
                 ],
@@ -1370,16 +1352,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Lista de valores del catálogo",
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "count": {
-                                    "type": "integer"
-                                },
-                                "data": {
-                                    "type": "array",
-                                    "items": {}
-                                }
-                            }
+                            "$ref": "#/definitions/dtos.SystemValueListResponseDTO"
                         }
                     },
                     "500": {
@@ -1393,7 +1366,7 @@ const docTemplate = `{
         },
         "/system-values/category-types": {
             "get": {
-                "description": "Obtiene todos los tipos de categoría disponibles en el sistema: INCOME (para clasificar ingresos) y EXPENSE (para clasificar gastos). Endpoint público, no requiere autenticación",
+                "description": "Obtiene todos los tipos de categoría disponibles: INCOME (para ingresos) y EXPENSE (para gastos). Endpoint público, no requiere autenticación",
                 "produces": [
                     "application/json"
                 ],
@@ -1405,16 +1378,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Lista de tipos de categoría",
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "count": {
-                                    "type": "integer"
-                                },
-                                "data": {
-                                    "type": "array",
-                                    "items": {}
-                                }
-                            }
+                            "$ref": "#/definitions/dtos.SystemValueListResponseDTO"
                         }
                     },
                     "500": {
@@ -1428,7 +1392,7 @@ const docTemplate = `{
         },
         "/system-values/transaction-types": {
             "get": {
-                "description": "Obtiene todos los tipos de transacción válidos en el sistema: INCOME (ingreso, requiere category_id), EXPENSE (gasto, requiere category_id), TRANSFER (transferencia entre cuentas, requiere account_to_id). Endpoint público, no requiere autenticación",
+                "description": "Obtiene todos los tipos de transacción válidos: INCOME (requiere category_id), EXPENSE (requiere category_id), TRANSFER (requiere account_to_id). Endpoint público, no requiere autenticación",
                 "produces": [
                     "application/json"
                 ],
@@ -1440,16 +1404,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Lista de tipos de transacción",
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "count": {
-                                    "type": "integer"
-                                },
-                                "data": {
-                                    "type": "array",
-                                    "items": {}
-                                }
-                            }
+                            "$ref": "#/definitions/dtos.SystemValueListResponseDTO"
                         }
                     },
                     "500": {
@@ -2316,7 +2271,9 @@ const docTemplate = `{
             "required": [
                 "email",
                 "first_name",
-                "last_name"
+                "last_name",
+                "password",
+                "user_name"
             ],
             "properties": {
                 "email": {
@@ -2326,6 +2283,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "last_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "user_name": {
                     "type": "string"
                 }
             }
@@ -2589,7 +2553,8 @@ const docTemplate = `{
                 "email",
                 "first_name",
                 "last_name",
-                "password"
+                "password",
+                "user_name"
             ],
             "properties": {
                 "email": {
@@ -2604,6 +2569,9 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 8
+                },
+                "user_name": {
+                    "type": "string"
                 }
             }
         },
@@ -2673,6 +2641,46 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "operation completed successfully"
+                }
+            }
+        },
+        "dtos.SystemValueListResponseDTO": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.SystemValueResponseDTO"
+                    }
+                }
+            }
+        },
+        "dtos.SystemValueResponseDTO": {
+            "type": "object",
+            "properties": {
+                "catalog_type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
                 }
             }
         },
@@ -2815,6 +2823,9 @@ const docTemplate = `{
         "dtos.UpdateUserDTO": {
             "type": "object",
             "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -2822,6 +2833,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "last_name": {
+                    "type": "string"
+                },
+                "user_name": {
                     "type": "string"
                 }
             }
@@ -2842,6 +2856,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "last_name": {
+                    "type": "string"
+                },
+                "user_name": {
                     "type": "string"
                 }
             }
